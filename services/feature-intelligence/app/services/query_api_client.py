@@ -37,18 +37,27 @@ class QueryApiClient:
         return []
 
   async def get_feature_metrics(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    if settings.DEMO_MODE:
+      from app.core.demo import get_mock_features
+      return get_mock_features(project_id)
     return await self._get(
       "/api/v1/features/metrics",
       {"project_id": project_id, "start_date": start_date, "end_date": end_date}
     )
 
   async def get_user_activity(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    if settings.DEMO_MODE:
+      from app.core.demo import get_mock_user_activity
+      return get_mock_user_activity(project_id)
     return await self._get(
       "/api/v1/users/activity",
       {"project_id": project_id, "start_date": start_date, "end_date": end_date}
     )
 
   async def get_sessions(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    if settings.DEMO_MODE:
+      from app.core.demo import get_mock_sessions
+      return get_mock_sessions(project_id)
     return await self._get(
       "/api/v1/sessions",
       {"project_id": project_id, "start_date": start_date, "end_date": end_date}

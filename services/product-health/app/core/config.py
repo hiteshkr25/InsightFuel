@@ -5,6 +5,7 @@ class Settings(BaseSettings):
   PROJECT_NAME: str = "InsightFuel Product Health Engine"
   API_V1_STR: str = "/api/v1"
   ADMIN_SECRET_TOKEN: str = os.getenv("ADMIN_SECRET_TOKEN", "admin_replay_secret_token_12345")
+  DEMO_MODE: bool = os.getenv("DEMO_MODE", "false").lower() == "true"
 
   # JWT Configurations
   JWT_SECRET: str = os.getenv("JWT_SECRET", "super_secret_jwt_signing_key_12345_secure")

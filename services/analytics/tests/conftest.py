@@ -1,6 +1,7 @@
 import os
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["CLICKHOUSE_HOST"] = "mock_host"
+os.environ["DEMO_MODE"] = "false"
 
 import pytest
 from fastapi.testclient import TestClient

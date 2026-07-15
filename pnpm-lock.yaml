@@ -130,6 +130,15 @@ importers:
 
   packages/config/typescript: {}
 
+  packages/demo-data:
+    devDependencies:
+      '@insightfuel/typescript-config':
+        specifier: workspace:*
+        version: link:../config/typescript
+      typescript:
+        specifier: ^5.4.2
+        version: 5.9.3
+
   packages/sdk-browser:
     devDependencies:
       '@insightfuel/typescript-config':

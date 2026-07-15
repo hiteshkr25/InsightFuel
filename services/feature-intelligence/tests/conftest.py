@@ -1,6 +1,7 @@
 import os
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["REDIS_URL"] = "redis://localhost:6379/0"
+os.environ["DEMO_MODE"] = "false"
 
 import pytest
 from fastapi.testclient import TestClient

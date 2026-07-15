@@ -23,6 +23,9 @@ class AnalyticsRepository:
     end_date: str, filters: Dict[str, Any],
     limit: int = 100, offset: int = 0
   ) -> List[Dict[str, Any]]:
+    from app.core.demo import DEMO_MODE, get_mock_sessions
+    if DEMO_MODE:
+      return get_mock_sessions(project_id, limit)
     client = clickhouse_manager.get_client()
     if not client:
       return []
@@ -51,6 +54,9 @@ class AnalyticsRepository:
       return []
 
   def get_user_activity(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    from app.core.demo import DEMO_MODE, get_mock_user_activity
+    if DEMO_MODE:
+      return get_mock_user_activity(project_id)
     client = clickhouse_manager.get_client()
     if not client:
       return []
@@ -68,6 +74,9 @@ class AnalyticsRepository:
       return []
 
   def get_retention_metrics(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    from app.core.demo import DEMO_MODE, get_mock_retention
+    if DEMO_MODE:
+      return get_mock_retention(project_id)
     client = clickhouse_manager.get_client()
     if not client:
       return []
@@ -85,6 +94,9 @@ class AnalyticsRepository:
       return []
 
   def get_funnel_metrics(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    from app.core.demo import DEMO_MODE, get_mock_funnels
+    if DEMO_MODE:
+      return get_mock_funnels(project_id)
     client = clickhouse_manager.get_client()
     if not client:
       return []
@@ -102,6 +114,9 @@ class AnalyticsRepository:
       return []
 
   def get_path_metrics(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    from app.core.demo import DEMO_MODE, get_mock_paths
+    if DEMO_MODE:
+      return get_mock_paths(project_id)
     client = clickhouse_manager.get_client()
     if not client:
       return []
@@ -119,6 +134,9 @@ class AnalyticsRepository:
       return []
 
   def get_feature_metrics(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    from app.core.demo import DEMO_MODE, get_mock_features
+    if DEMO_MODE:
+      return get_mock_features(project_id)
     client = clickhouse_manager.get_client()
     if not client:
       return []
@@ -136,6 +154,9 @@ class AnalyticsRepository:
       return []
 
   def get_performance_metrics(self, project_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    from app.core.demo import DEMO_MODE, get_mock_performance
+    if DEMO_MODE:
+      return get_mock_performance(project_id)
     client = clickhouse_manager.get_client()
     if not client:
       return []

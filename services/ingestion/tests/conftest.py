@@ -1,3 +1,5 @@
+import os
+os.environ["DEMO_MODE"] = "false"
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine

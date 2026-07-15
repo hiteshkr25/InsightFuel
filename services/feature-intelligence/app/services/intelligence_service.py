@@ -14,7 +14,13 @@ async def calculate_feature_intelligence(project_id: str, db: Session) -> int:
   Fetches metrics from the Query API, computes analytics snapshots,
   and updates PostgreSQL tables.
   """
+  from app.core.config import settings
   features = db.query(FeatureRegistry).filter(FeatureRegistry.status == "tracked").all()
+  if settings.DEMO_MODE and not features:
+    features = [
+      FeatureRegistry(project_id=project_id, feature_id="feat_dashboard", category="core", status="tracked", business_weight=1.2),
+      FeatureRegistry(project_id=project_id, feature_id="feat_analytics", category="analytics", status="tracked", business_weight=1.5),
+    ]
   if not features:
     logger.info(f"No tracked features in registry for project {project_id}")
     return 0

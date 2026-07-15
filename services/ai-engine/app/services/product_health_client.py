@@ -44,18 +44,27 @@ class ProductHealthClient:
     return {}
 
   async def get_health_status(self, project_id: str) -> Dict[str, Any]:
+    if settings.DEMO_MODE:
+      from app.core.demo import get_mock_health
+      return get_mock_health(project_id)
     return await self._get(
       "/api/v1/health/status",
       {"project_id": project_id}
     )
 
   async def get_health_breakdown(self, project_id: str) -> Dict[str, Any]:
+    if settings.DEMO_MODE:
+      from app.core.demo import get_mock_health
+      return get_mock_health(project_id)
     return await self._get(
       "/api/v1/health/breakdown",
       {"project_id": project_id}
     )
 
   async def get_health_trends(self, project_id: str) -> Dict[str, Any]:
+    if settings.DEMO_MODE:
+      from app.core.demo import get_mock_health
+      return {"trends": [get_mock_health(project_id)]}
     return await self._get(
       "/api/v1/health/trends",
       {"project_id": project_id}

@@ -44,12 +44,18 @@ class FeatureIntelClient:
     return []
 
   async def get_feature_rankings(self, project_id: str, sort_by: str = "importance") -> List[Dict[str, Any]]:
+    if settings.DEMO_MODE:
+      from app.core.demo import get_mock_features
+      return get_mock_features(project_id)
     return await self._get(
       "/api/v1/intelligence/rankings",
       {"project_id": project_id, "sort_by": sort_by}
     )
 
   async def get_feature_trends(self, project_id: str, trend: str = "growing") -> List[Dict[str, Any]]:
+    if settings.DEMO_MODE:
+      from app.core.demo import get_mock_features
+      return [x for x in get_mock_features(project_id) if x["health_status"] == trend]
     return await self._get(
       "/api/v1/intelligence/trends",
       {"project_id": project_id, "trend": trend}
