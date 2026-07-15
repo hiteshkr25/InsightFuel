@@ -5,12 +5,18 @@ let reconnectTimeout: any = null;
 let heartbeatInterval: any = null;
 let currentQueryClient: QueryClient | null = null;
 
-const WS_URL = 'ws://localhost:3000/ws';
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws';
 
 export function initWebSocket(queryClient: QueryClient) {
+  const isMock = import.meta.env.VITE_MOCK_MODE === 'true' || import.meta.env.VITE_DEMO_MODE === 'true';
+  if (isMock) {
+    console.log('Skipping WebSocket connection in Demo Mode.');
+    return;
+  }
   currentQueryClient = queryClient;
   connect();
 }
+
 
 function connect() {
   if (ws) {

@@ -32,12 +32,13 @@ export default function ProjectAdmin() {
     }
   };
 
+  const gatewayUrl = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3000';
   const sdkScript = `import { InsightFuelSDK } from '@insightfuel/sdk-browser';
 
 const tracker = new InsightFuelSDK({
   apiKey: "${keyCreated}",
   projectId: "${activeProjectId}",
-  endpoint: "http://localhost:3000/api/v1/events"
+  endpoint: "${gatewayUrl}/api/v1/events"
 });
 
 tracker.init();

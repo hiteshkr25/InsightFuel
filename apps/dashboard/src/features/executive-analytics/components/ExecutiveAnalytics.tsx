@@ -8,7 +8,7 @@ import { Activity, RefreshCw, BarChart2 } from 'lucide-react';
 import { PowerBIEmbed } from 'powerbi-client-react';
 import { models } from 'powerbi-client';
 
-const QUERY_API_BASE = 'http://localhost:3004';
+const QUERY_API_BASE = import.meta.env.VITE_QUERY_API_URL || 'http://localhost:3004';
 
 export default function ExecutiveAnalytics() {
   const { activeOrgId, activeProjectId, token } = useAuthStore();

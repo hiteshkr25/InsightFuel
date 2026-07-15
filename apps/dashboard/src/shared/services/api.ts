@@ -1,13 +1,14 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/useAuthStore';
 
-const QUERY_API_BASE = 'http://localhost:3004';
-const FEATURE_INTEL_BASE = 'http://localhost:3005';
-const PRODUCT_HEALTH_BASE = 'http://localhost:3006';
-const AI_ENGINE_BASE = 'http://localhost:3007';
+const QUERY_API_BASE = import.meta.env.VITE_QUERY_API_URL || 'http://localhost:3004';
+const FEATURE_INTEL_BASE = import.meta.env.VITE_FEATURE_INTELLIGENCE_URL || 'http://localhost:3005';
+const PRODUCT_HEALTH_BASE = import.meta.env.VITE_PRODUCT_HEALTH_URL || 'http://localhost:3006';
+const AI_ENGINE_BASE = import.meta.env.VITE_AI_ENGINE_URL || 'http://localhost:3007';
 
 // Controlled strictly by environment variables setup
-const IS_MOCK_MODE = import.meta.env.VITE_MOCK_MODE === 'true';
+const IS_MOCK_MODE = import.meta.env.VITE_MOCK_MODE === 'true' || import.meta.env.VITE_DEMO_MODE === 'true';
+
 
 const getHeaders = () => {
   const token = useAuthStore.getState().token;
