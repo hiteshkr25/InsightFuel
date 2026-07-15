@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: insightfuel/query-api
+  pullPolicy: Always
+  tag: "dev"
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+ingress:
+  enabled: false

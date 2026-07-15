@@ -1,0 +1,46 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "prometheus_alerts.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'ingestion-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:3001', 'ingestion-service:3001']
+
+  - job_name: 'event-processor'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:3002', 'event-processor:3002']
+
+  - job_name: 'analytics-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:3003', 'analytics-service:3003']
+
+  - job_name: 'query-api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:3004', 'query-api:3004']
+
+  - job_name: 'feature-intelligence'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:3005', 'feature-intelligence:3005']
+
+  - job_name: 'product-health'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:3006', 'product-health:3006']
+
+  - job_name: 'ai-engine'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:3007', 'ai-engine:3007']

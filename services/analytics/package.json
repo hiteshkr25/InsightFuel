@@ -1,0 +1,14 @@
+{
+  "name": "@insightfuel/analytics-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "InsightFuel Analytics Processing Worker Service",
+  "scripts": {
+    "build": "echo 'No build required for Python'",
+    "dev": "uvicorn app.main:app --reload --port 3003",
+    "start": "uvicorn app.main:app --host 0.0.0.0 --port 3003",
+    "lint": "echo 'No lint required for Python'",
+    "test": "python -m pytest",
+    "clean": "rm -rf .pytest_cache __pycache__ app/__pycache__"
+  }
+}

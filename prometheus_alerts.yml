@@ -1,0 +1,74 @@
+groups:
+  - name: PlatformAlerts
+    rules:
+      - alert: HighApiErrorRate
+        expr: sum(rate(http_requests_total{http_status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High API Error Rate detected"
+          description: "API HTTP status code 5xx error rate is above 5% (current value: {{ $value }}%)"
+
+      - alert: SlowQueries
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow API Queries detected"
+          description: "95th percentile query execution latency is above 2.0s (current value: {{ $value }}s)"
+
+      - alert: KafkaConsumerLagSpike
+        expr: sum(kafka_consumer_lag) by (topic, consumergroup) > 5000
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka Consumer Lag spike detected"
+          description: "Lag for topic {{ $labels.topic }} is above 5000 messages (current value: {{ $value }})"
+
+      - alert: ClickHouseInsertFailure
+        expr: rate(clickhouse_failed_inserts_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ClickHouse insert failures detected"
+          description: "ClickHouse insert write errors occurred in the last minute"
+
+      - alert: SchedulerJobFailure
+        expr: rate(scheduler_failed_runs_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Scheduler Job failed run detected"
+          description: "Background job scheduler failed executions occurred"
+
+      - alert: AIEngineComputationDelay
+        expr: ai_recommendation_computation_seconds_sum / ai_recommendation_computation_seconds_count > 10.0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI recommendation engine processing delay"
+          description: "Average recommendation compute duration exceeds 10s"
+
+      - alert: SloFastBurnRate
+        expr: (sum(rate(http_requests_total{http_status=~"5.."}[1h])) / sum(rate(http_requests_total[1h]))) * 100 > 14.4
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SLO Error Budget burning fast"
+          description: "The 1-hour error budget consumption rate is above 14.4% (fast burn rate active)"
+
+      - alert: SchemaValidationFailuresSpike
+        expr: sum(rate(ingestion_schema_validation_failures_total[5m])) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Schema Validation Failures rate spike"
+          description: "Telemetry ingestion is dropping invalid event formats (current value: {{ $value }} eps)"

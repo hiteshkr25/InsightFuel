@@ -1,0 +1,52 @@
+{
+  "editable": true,
+  "id": 2,
+  "panels": [
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Browser SDK Event Capture Rate (eps)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(sdk_events_captured_total[5m])) by (project_id)", "legendFormat": "{{project_id}} rate", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "title": "Beacon Send Success Ratio (%)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(sdk_sendbeacon_success_total[5m])) / sum(rate(sdk_sendbeacon_attempts_total[5m])) * 100", "legendFormat": "Success %", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "title": "SDK Average Payload Size (Bytes)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(sdk_event_payload_bytes_sum) / sum(sdk_event_payload_bytes_count)", "legendFormat": "Avg Size", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "title": "SDK Network Failures & Retries",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(sdk_network_failures_total[5m]))", "legendFormat": "Network Drops", "refId": "A" },
+        { "expr": "sum(rate(sdk_event_retries_total[5m]))", "legendFormat": "Event Retries", "refId": "B" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["sdk", "client"],
+  "title": "InsightFuel Browser SDK Telemetry",
+  "version": 1
+}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: insightfuel
+description: Enterprise Helm Chart packaging for deploying the InsightFuel Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

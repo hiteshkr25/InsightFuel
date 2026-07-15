@@ -1,0 +1,105 @@
+{
+  "editable": true,
+  "id": 5,
+  "panels": [
+    {
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Active Organizations",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "count(count(http_requests_total) by (organization_id))", "legendFormat": "Orgs", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "title": "Active Projects",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "count(count(http_requests_total) by (project_id))", "legendFormat": "Projects", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "title": "Active SDK Installations",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "count(count(sdk_events_captured_total) by (project_id))", "legendFormat": "SDKs", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "title": "Events Ingested per Minute",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(ingestion_events_received_total[1m])) * 60", "legendFormat": "Events/min", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "id": 5,
+      "title": "User Active Levels (DAU/WAU/MAU)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(dau)", "legendFormat": "Daily Active Users (DAU)", "refId": "A" },
+        { "expr": "sum(wau)", "legendFormat": "Weekly Active Users (WAU)", "refId": "B" },
+        { "expr": "sum(mau)", "legendFormat": "Monthly Active Users (MAU)", "refId": "C" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "id": 6,
+      "title": "Recommendations Acceptance Conversion Flow",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(ai_recommendations_generated_total[5m]))", "legendFormat": "Generated", "refId": "A" },
+        { "expr": "sum(rate(ai_recommendations_status_total{status=\"Accepted\"}[5m]))", "legendFormat": "Accepted", "refId": "B" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 14 },
+      "id": 7,
+      "title": "Product Health Index Average",
+      "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "avg(product_health_score)", "legendFormat": "Health Score", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 14 },
+      "id": 8,
+      "title": "Average Session Duration (s)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(session_duration_seconds_sum[5m])) / sum(rate(session_duration_seconds_count[5m]))", "legendFormat": "Duration", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 14 },
+      "id": 9,
+      "title": "Average Feature Adoption Rate",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "avg(feature_adoption_rate)", "legendFormat": "Adoption Rate", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["insightfuel", "business"],
+  "time": { "from": "now-30d", "to": "now" },
+  "title": "InsightFuel Business Overview",
+  "version": 1
+}

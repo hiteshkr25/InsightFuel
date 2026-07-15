@@ -1,0 +1,14 @@
+{
+  "name": "@insightfuel/ai-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "InsightFuel AI Recommendation Processing Engine",
+  "scripts": {
+    "build": "echo 'No build required for Python'",
+    "dev": "uvicorn app.main:app --reload --port 3007",
+    "start": "uvicorn app.main:app --host 0.0.0.0 --port 3007",
+    "lint": "echo 'No lint required for Python'",
+    "test": "python -m pytest",
+    "clean": "rm -rf .pytest_cache __pycache__ app/__pycache__"
+  }
+}

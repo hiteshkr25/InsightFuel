@@ -1,0 +1,107 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "id": 1,
+  "panels": [
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "RED: Request Rate (throughput/sec)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(http_requests_total[5m])) by (service_name)", "legendFormat": "{{service_name}}", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "title": "RED: Error Rate (%)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{http_status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100", "legendFormat": "Error Rate %", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "title": "RED: Latency (p95 duration)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95 latency", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 6 },
+      "id": 4,
+      "title": "USE: CPU Utilization (%)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(node_cpu_seconds_total{mode!=\"idle\"}[5m])) / sum(rate(node_cpu_seconds_total[5m])) * 100", "legendFormat": "CPU Used %", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 6 },
+      "id": 5,
+      "title": "USE: Memory Saturation (%)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100", "legendFormat": "Memory Used %", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 6 },
+      "id": 6,
+      "title": "USE: Disk Storage Failures",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(node_disk_device_errors)", "legendFormat": "Disk errors", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 12 },
+      "id": 7,
+      "title": "Pipeline Telemetry Data Quality Monitoring",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(ingestion_schema_validation_failures_total[5m]))", "legendFormat": "Schema failures", "refId": "A" },
+        { "expr": "sum(rate(event_processor_duplicate_events_total[5m]))", "legendFormat": "Duplicates", "refId": "B" },
+        { "expr": "sum(rate(ingestion_pii_masked_records_total[5m]))", "legendFormat": "PII Masked", "refId": "C" }
+      ]
+    },
+    {
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 12 },
+      "id": 8,
+      "title": "SLO Burn Rate & Remaining Budget",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "(sum(rate(http_requests_total{http_status=~\"5..\"}[1h])) / sum(rate(http_requests_total[1h]))) * 100", "legendFormat": "Error Budget Burn Rate", "refId": "A" },
+        { "expr": "100 - (sum(rate(http_requests_total{http_status=~\"5..\"}[30d])) / sum(rate(http_requests_total[30d])) * 100)", "legendFormat": "Availability SLO % (Target: 99.9%)", "refId": "B" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["insightfuel", "operations"],
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "InsightFuel Platform Overview",
+  "version": 2
+}

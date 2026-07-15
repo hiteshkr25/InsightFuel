@@ -1,0 +1,9 @@
+# Code Owners registry mappings
+
+*                    @insightfuel/core-maintainers
+/infra/              @insightfuel/devops-engineers
+/infra/k8s/          @insightfuel/devops-engineers
+/infra/helm/         @insightfuel/devops-engineers
+/infra/terraform/    @insightfuel/devops-engineers
+/packages/           @insightfuel/packages-leads
+/apps/dashboard/     @insightfuel/frontend-leads

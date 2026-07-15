@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: InsightFuel Analytics Query API
+  description: Analytical query execution paths for cohort retention, conversion funnels, and feature popularity trends.
+  version: 1.0.0
+paths:
+  /v1/query/trend:
+    post:
+      summary: Get event and user popularity trends.
+      responses:
+        '200':
+          description: Time-bucketed trend series.

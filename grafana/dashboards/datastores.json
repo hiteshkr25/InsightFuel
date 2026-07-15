@@ -1,0 +1,51 @@
+{
+  "editable": true,
+  "id": 3,
+  "panels": [
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Kafka Consumer Group Lag",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(kafka_consumer_lag) by (topic, consumergroup)", "legendFormat": "{{topic}} ({{consumergroup}})", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "title": "ClickHouse Query Execution Time (Avg)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(clickhouse_query_duration_seconds_sum[5m])) / sum(rate(clickhouse_query_duration_seconds_count[5m]))", "legendFormat": "Avg duration", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "title": "ClickHouse Insert Throughput (events/sec)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(clickhouse_events_inserted_total[5m]))", "legendFormat": "Inserts", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "title": "Redis Memory Footprint (Bytes)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "redis_memory_used_bytes", "legendFormat": "Used memory", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["datastores", "system"],
+  "title": "InsightFuel Datastores Telemetry",
+  "version": 1
+}

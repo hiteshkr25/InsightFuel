@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: InsightFuel Management & BFF API
+  description: Definitive API spec for BFF workspace and project configuration administration.
+  version: 1.0.0
+paths:
+  /v1/mgmt/projects:
+    get:
+      summary: Retrieve all active projects inside organization.
+      responses:
+        '200':
+          description: List of projects.

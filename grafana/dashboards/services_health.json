@@ -1,0 +1,51 @@
+{
+  "editable": true,
+  "id": 4,
+  "panels": [
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "AI Recommendations Generated (Rate)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(ai_recommendations_generated_total[5m])) by (project_id, category)", "legendFormat": "{{project_id}} - {{category}}", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "title": "AI Recommendation Pipeline Runtime (Avg)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(ai_recommendation_computation_seconds_sum[5m])) / sum(rate(ai_recommendation_computation_seconds_count[5m]))", "legendFormat": "Compute time", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "title": "Product Health Index Computations Rate",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(product_health_computations_total[5m])) by (project_id)", "legendFormat": "{{project_id}} rate", "refId": "A" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "title": "Scheduler Job Execution Failures",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(scheduler_failed_runs_total[5m]))", "legendFormat": "Job failures", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["services", "health"],
+  "title": "InsightFuel Services Health Telemetry",
+  "version": 1
+}

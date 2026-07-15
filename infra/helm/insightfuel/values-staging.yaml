@@ -1,0 +1,27 @@
+replicaCount: 2
+
+image:
+  repository: insightfuel/query-api
+  pullPolicy: IfNotPresent
+  tag: "rc-latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: staging.insightfuel.io
+      paths:
+        - path: /api/v1
+          pathType: Prefix

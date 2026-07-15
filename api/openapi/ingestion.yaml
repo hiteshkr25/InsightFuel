@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: InsightFuel Event Ingestion API
+  description: Public SDK and server event ingestion specifications.
+  version: 1.0.0
+paths:
+  /v1/capture:
+    post:
+      summary: Capture a batch of telemetry events.
+      responses:
+        '202':
+          description: Event batch successfully accepted and enqueued.
