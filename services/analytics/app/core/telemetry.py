@@ -81,7 +81,7 @@ def setup_telemetry(app: FastAPI) -> None:
       response = await call_next(request)
       duration = time.time() - start_time
       
-      HTTP_REQUEST_COUNT.labels(method=method, endpoint=endpoint, http_status=response.status_code).inc()
+      HTTP_REQUEST_COUNT.labels(method=method, endpoint=endpoint, http_status=str(response.status_code)).inc()
       HTTP_REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(duration)
       
       response.headers["X-Request-ID"] = req_id

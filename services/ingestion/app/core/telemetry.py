@@ -76,7 +76,7 @@ def setup_telemetry(app: FastAPI) -> None:
       duration = time.time() - start_time
       
       # Record metrics
-      HTTP_REQUEST_COUNT.labels(method=method, endpoint=endpoint, http_status=response.status_code).inc()
+      HTTP_REQUEST_COUNT.labels(method=method, endpoint=endpoint, http_status=str(response.status_code)).inc()
       HTTP_REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(duration)
       
       # Inject tracing headers into response

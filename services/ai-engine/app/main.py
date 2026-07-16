@@ -54,9 +54,6 @@ async def root():
     "version": "1.0.0"
   }
 
-setup_telemetry(app)
-
-
 # Include v1 routers
 app.include_router(recommendations_router, prefix=settings.API_V1_STR, tags=["Recommendations"])
 
@@ -85,4 +82,7 @@ async def api_ready_check():
 @app.get("/metrics", tags=["Metrics"])
 async def metrics_endpoint():
   return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+setup_telemetry(app)
+
 
