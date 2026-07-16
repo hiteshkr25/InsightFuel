@@ -36,6 +36,8 @@ async def lifespan(app: FastAPI):
   # Shutdown scheduler on termination
   shutdown_scheduler()
 
+import os
+
 app = FastAPI(
   title=settings.PROJECT_NAME,
   description="InsightFuel Analytics Processing Metrics Engine",
@@ -44,15 +46,32 @@ app = FastAPI(
   lifespan=lifespan
 )
 
+# Parse CORS origins
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_raw:
+  origins = [o.strip() for o in allowed_origins_raw.split(",") if o.strip()]
+else:
+  origins = ["http://localhost:3000", "http://localhost:5173", "http://localhost:3001", "http://localhost:3002"]
+
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=["*"],
+  allow_origins=origins,
   allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"],
 )
 
+# Health Check API Routes
+@app.get("/", tags=["Health"])
+async def root():
+  return {
+    "service": "analytics",
+    "status": "running",
+    "version": "1.0.0"
+  }
+
 setup_telemetry(app)
+
 
 @app.get("/health/live", tags=["Health"])
 async def live_check():

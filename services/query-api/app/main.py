@@ -23,6 +23,8 @@ async def lifespan(app: FastAPI):
   # Close connections
   clickhouse_manager.close()
 
+import os
+
 app = FastAPI(
   title=settings.PROJECT_NAME,
   description="InsightFuel Analytics Read-Only Query Service API",
@@ -31,15 +33,32 @@ app = FastAPI(
   lifespan=lifespan
 )
 
+# Parse CORS origins
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_raw:
+  origins = [o.strip() for o in allowed_origins_raw.split(",") if o.strip()]
+else:
+  origins = ["http://localhost:3000", "http://localhost:5173", "http://localhost:3001", "http://localhost:3002"]
+
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=["*"],
+  allow_origins=origins,
   allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"],
 )
 
+# Health Check API Routes
+@app.get("/", tags=["Health"])
+async def root():
+  return {
+    "service": "query-api",
+    "status": "running",
+    "version": "1.0.0"
+  }
+
 setup_telemetry(app)
+
 
 # Include v1 API routers
 app.include_router(sessions_router, prefix=settings.API_V1_STR, tags=["Sessions"])

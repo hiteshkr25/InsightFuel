@@ -9,6 +9,8 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.telemetry import setup_telemetry, generate_latest, CONTENT_TYPE_LATEST
 from app.pipeline.worker import worker_manager
+from app.pipeline.consumer import kafka_consumer_manager
+import os
 
 def get_db():
   db = SessionLocal()
@@ -48,15 +50,32 @@ app = FastAPI(
   lifespan=lifespan
 )
 
+# Parse CORS origins
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_raw:
+  origins = [o.strip() for o in allowed_origins_raw.split(",") if o.strip()]
+else:
+  origins = ["http://localhost:3000", "http://localhost:5173", "http://localhost:3001", "http://localhost:3002"]
+
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=["*"],
+  allow_origins=origins,
   allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"],
 )
 
+# Health Check API Routes
+@app.get("/", tags=["Health"])
+async def root():
+  return {
+    "service": "event-processor",
+    "status": "running",
+    "version": "1.0.0"
+  }
+
 setup_telemetry(app)
+
 
 @app.get("/health/live", tags=["Health"])
 async def live_check():
