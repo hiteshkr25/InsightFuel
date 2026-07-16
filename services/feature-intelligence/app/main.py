@@ -87,10 +87,3 @@ async def metrics_endpoint():
   return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 setup_telemetry(app)
-print("=" * 60)
-print("Feature Intelligence starting")
-print("OpenAPI URL:", app.openapi_url)
-print("Routes:")
-for route in app.routes:
-    print(route.path, route.methods)
-print("=" * 60)
