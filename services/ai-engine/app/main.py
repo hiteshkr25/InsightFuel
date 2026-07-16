@@ -64,6 +64,10 @@ app.include_router(recommendations_router, prefix=settings.API_V1_STR, tags=["Re
 async def live_check():
   return {"status": "OK", "uptime": "healthy"}
 
+@app.get(f"{settings.API_V1_STR}/health/live", tags=["Health"])
+async def api_live_check():
+  return await live_check()
+
 @app.get("/health/ready", tags=["Health"])
 async def ready_check():
   return {
@@ -74,6 +78,11 @@ async def ready_check():
     }
   }
 
+@app.get(f"{settings.API_V1_STR}/health/ready", tags=["Health"])
+async def api_ready_check():
+  return await ready_check()
+
 @app.get("/metrics", tags=["Metrics"])
 async def metrics_endpoint():
   return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
