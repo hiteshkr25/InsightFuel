@@ -3,154 +3,184 @@ import { useAuthStore, GlobalApiKey } from '../../../shared/stores/useAuthStore'
 import { 
   Key, 
   Search, 
+  RotateCw, 
   ShieldAlert, 
-  Power, 
-  AlertTriangle, 
+  Check, 
   Copy, 
-  Check
+  Lock 
 } from 'lucide-react';
 
 export default function AdminApiKeys() {
-  const { allApiKeysList, revokeApiKey, flagApiKeyAbuse } = useAuthStore();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const { allApiKeysList, rotateApiKey, deleteApiKey, flagApiKeyAbuse } = useAuthStore();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [envFilter, setEnvFilter] = useState<'all' | 'production' | 'development'>('all');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const filteredKeys = allApiKeysList.filter(k => 
-    k.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    k.ownerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    k.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    k.key.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredKeys = allApiKeysList.filter((k: GlobalApiKey) => {
+    const matchesSearch = 
+      k.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      k.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      k.ownerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      k.projectName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesEnv = envFilter === 'all' || k.environment === envFilter;
+    return matchesSearch && matchesEnv;
+  });
 
-  const handleCopy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKeyId(id);
-    setTimeout(() => setCopiedKeyId(null), 2500);
+  const handleCopy = (keyStr: string, id: string) => {
+    navigator.clipboard.writeText(keyStr);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2500);
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans text-neutral-100">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center space-x-2.5">
-            <Key className="h-6 w-6 text-rose-500" />
-            <span>Platform API Keys Security Control</span>
+          <h1 className="text-xl font-semibold text-white tracking-tight flex items-center space-x-2">
+            <Key className="h-5 w-5 text-red-500" />
+            <span>Platform API Key Governance</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            System-wide audit of all public SDK write keys, request volumes, and abuse flags.
+          <p className="text-xs text-neutral-400 mt-1">
+            SuperAdmin global oversight over every API key generated across all customer projects.
           </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full sm:w-72">
-          <Search className="h-4 w-4 text-slate-500 absolute left-3 top-3" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search key, owner, project..."
-            className="w-full pl-9 pr-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"
-          />
+        <div className="flex items-center space-x-3">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="h-3.5 w-3.5 text-neutral-500 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search key, owner, project..."
+              className="pl-8 pr-3 py-1.5 bg-black border border-neutral-800 rounded-lg text-xs text-white placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+            />
+          </div>
+
+          {/* Environment Filter */}
+          <select
+            value={envFilter}
+            onChange={(e) => setEnvFilter(e.target.value as any)}
+            className="bg-black border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 font-medium focus:outline-none"
+          >
+            <option value="all">All Environments</option>
+            <option value="production">Production Only</option>
+            <option value="development">Development Only</option>
+          </select>
         </div>
       </div>
 
-      {/* Security Banner */}
-      <div className="bg-rose-950/30 border border-rose-800/50 rounded-2xl p-4 flex items-start space-x-3 text-xs text-rose-200">
-        <ShieldAlert className="h-5 w-5 text-rose-400 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="font-bold text-white">Superadmin Security Control Notice</p>
-          <p className="text-slate-400 mt-0.5">
-            Revoking an API key will immediately reject incoming telemetry HTTP requests from that client. Flagging a key as <code className="text-amber-300">Flagged Abuse</code> will trigger automated rate limiting across API Gateway nodes.
-          </p>
-        </div>
-      </div>
-
-      {/* Keys Table */}
-      <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
-        <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white">Global API Keys ({filteredKeys.length})</h3>
+      {/* Keys Table Container */}
+      <div className="bg-neutral-950 border border-neutral-800 rounded-xl overflow-hidden shadow-xl">
+        <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
+            Registered Global Keys ({filteredKeys.length})
+          </h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/60 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+          <table className="w-full text-left text-xs text-neutral-300">
+            <thead className="bg-black text-neutral-400 uppercase text-[10px] font-semibold border-b border-neutral-800">
               <tr>
-                <th className="py-3.5 px-6">Key Name & String</th>
-                <th className="py-3.5 px-6">Owner</th>
-                <th className="py-3.5 px-6">Project Space</th>
-                <th className="py-3.5 px-6">Total Requests</th>
-                <th className="py-3.5 px-6">Status</th>
-                <th className="py-3.5 px-6">Created Date</th>
-                <th className="py-3.5 px-6 text-right">Actions</th>
+                <th className="py-3 px-4">API Key & Name</th>
+                <th className="py-3 px-4">Project & Owner</th>
+                <th className="py-3 px-4">Environment</th>
+                <th className="py-3 px-4">Requests</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Last Used</th>
+                <th className="py-3 px-4 text-right">SuperAdmin Controls</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {filteredKeys.map((keyObj: GlobalApiKey) => (
-                <tr key={keyObj.id} className="hover:bg-slate-850/50 transition">
-                  <td className="py-4 px-6 font-semibold text-white">
-                    <div>
-                      <p>{keyObj.displayName}</p>
-                      <div className="flex items-center space-x-1.5 mt-0.5 font-mono text-[11px] text-slate-400">
-                        <span className="bg-slate-950 px-2 py-0.5 rounded border border-slate-800 select-all">{keyObj.key}</span>
-                        <button
-                          onClick={() => handleCopy(keyObj.key, keyObj.id)}
-                          className="p-1 hover:text-white"
-                        >
-                          {copiedKeyId === keyObj.id ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                        </button>
+            <tbody className="divide-y divide-neutral-900">
+              {filteredKeys.map((keyObj: GlobalApiKey) => {
+                const isActive = keyObj.status === 'active';
+
+                return (
+                  <tr key={keyObj.id} className="hover:bg-neutral-900/50 transition">
+                    <td className="py-3 px-4 font-semibold text-white">
+                      <div>
+                        <p>{keyObj.displayName}</p>
+                        <div className="flex items-center space-x-1.5 mt-0.5 font-mono text-[11px] text-neutral-400">
+                          <span className="bg-black px-1.5 py-0.5 rounded border border-neutral-800 select-all">{keyObj.key}</span>
+                          <button
+                            onClick={() => handleCopy(keyObj.key, keyObj.id)}
+                            className="p-1 hover:text-white"
+                          >
+                            {copiedId === keyObj.id ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 font-mono text-blue-400 font-medium">
-                    {keyObj.ownerEmail}
-                  </td>
-                  <td className="py-4 px-6 font-semibold text-slate-200">
-                    {keyObj.projectName}
-                  </td>
-                  <td className="py-4 px-6 font-mono font-bold text-white">
-                    {keyObj.requestCount.toLocaleString()}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                      keyObj.status === 'active' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                        : keyObj.status === 'flagged'
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                    }`}>
-                      {keyObj.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-slate-400">
-                    {keyObj.createdAt}
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      {keyObj.status === 'active' && (
+                    </td>
+
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="font-semibold text-white">{keyObj.projectName}</p>
+                        <p className="text-[10px] text-neutral-500 font-mono">{keyObj.ownerEmail}</p>
+                      </div>
+                    </td>
+
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                        keyObj.environment === 'production' 
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                          : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                      }`}>
+                        {keyObj.environment}
+                      </span>
+                    </td>
+
+                    <td className="py-3 px-4 font-mono font-medium text-white">
+                      {(keyObj.requestCount || 0).toLocaleString()}
+                    </td>
+
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                        isActive
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                      }`}>
+                        {keyObj.status}
+                      </span>
+                    </td>
+
+                    <td className="py-3 px-4 text-neutral-400">
+                      {keyObj.lastUsedAt || 'Never'}
+                    </td>
+
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end space-x-1">
+                        <button
+                          onClick={() => rotateApiKey(keyObj.id)}
+                          className="p-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 rounded transition"
+                          title="Force Key Rotation"
+                        >
+                          <RotateCw className="h-3.5 w-3.5" />
+                        </button>
+
                         <button
                           onClick={() => flagApiKeyAbuse(keyObj.id)}
-                          className="px-2.5 py-1 bg-amber-950/50 hover:bg-amber-900 text-amber-300 rounded-lg text-[11px] font-semibold border border-amber-800/50 transition flex items-center space-x-1"
-                          title="Flag for Rate Limit Abuse"
+                          className="p-1.5 bg-neutral-900 hover:bg-neutral-800 text-amber-400 rounded transition"
+                          title="Flag Abuse / Disable Key"
                         >
-                          <AlertTriangle className="h-3 w-3" />
-                          <span>Flag Abuse</span>
+                          <ShieldAlert className="h-3.5 w-3.5" />
                         </button>
-                      )}
 
-                      <button
-                        onClick={() => revokeApiKey(keyObj.id)}
-                        className="px-2.5 py-1 bg-red-950/50 hover:bg-red-900 text-red-400 rounded-lg text-[11px] font-semibold border border-red-900/50 transition flex items-center space-x-1"
-                        title="Revoke API Key"
-                      >
-                        <Power className="h-3 w-3" />
-                        <span>Revoke</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <button
+                          onClick={() => deleteApiKey(keyObj.id)}
+                          className="p-1.5 text-neutral-500 hover:text-red-400 rounded transition"
+                          title="Revoke Key"
+                        >
+                          <Lock className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -1,4 +1,5 @@
 import { LucideIcon } from 'lucide-react';
+import { useThemeStore } from '../stores/useThemeStore';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -19,15 +20,20 @@ export default function EmptyState({
   secondaryText,
   onSecondaryAction
 }: EmptyStateProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+
   return (
-    <div className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-8 text-center max-w-xl mx-auto shadow-xl my-6 space-y-4 font-sans">
-      <div className="h-14 w-14 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto shadow-inner">
-        <Icon className="h-7 w-7" />
+    <div className={`border rounded-2xl p-8 text-center max-w-xl mx-auto shadow-xl my-6 space-y-4 font-sans ${
+      isDark ? 'bg-neutral-950 border-neutral-800 text-neutral-100' : 'bg-white border-neutral-200 text-neutral-900'
+    }`}>
+      <div className="h-12 w-12 rounded-2xl bg-neutral-900 border border-neutral-800 text-blue-500 flex items-center justify-center mx-auto">
+        <Icon className="h-6 w-6" />
       </div>
 
-      <div className="space-y-1.5">
-        <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
-        <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
+      <div className="space-y-1">
+        <h3 className="text-base font-semibold text-white tracking-tight">{title}</h3>
+        <p className="text-xs text-neutral-400 leading-relaxed max-w-md mx-auto">
           {description}
         </p>
       </div>
@@ -37,7 +43,7 @@ export default function EmptyState({
           {actionText && onAction && (
             <button
               onClick={onAction}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/30 transition w-full sm:w-auto"
+              className="px-5 py-2.5 bg-white text-black hover:bg-neutral-100 rounded-xl text-xs font-semibold shadow-sm transition w-full sm:w-auto"
             >
               {actionText}
             </button>
@@ -45,7 +51,7 @@ export default function EmptyState({
           {secondaryText && onSecondaryAction && (
             <button
               onClick={onSecondaryAction}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition w-full sm:w-auto"
+              className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 rounded-xl text-xs font-semibold border border-neutral-800 transition w-full sm:w-auto"
             >
               {secondaryText}
             </button>

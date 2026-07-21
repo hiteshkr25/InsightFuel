@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore, Project } from '../../../shared/stores/useAuthStore';
+import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { 
   FolderKanban, 
   Plus, 
@@ -27,6 +28,7 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
     canManageKeys
   } = useAuthStore();
 
+  const { theme } = useThemeStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused' | 'archived'>('all');
@@ -58,30 +60,32 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
     setTimeout(() => setCopiedKeyId(null), 2500);
   };
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="space-y-6 font-sans">
+    <div className={`space-y-6 font-sans antialiased ${isDark ? 'text-neutral-100' : 'text-neutral-900'}`}>
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center space-x-2.5">
-            <FolderKanban className="h-6 w-6 text-blue-500" />
+          <h1 className="text-xl font-semibold text-white tracking-tight flex items-center space-x-2">
+            <FolderKanban className="h-5 w-5 text-blue-500" />
             <span>Customer Projects Workspace</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-neutral-400 mt-1">
             Manage web storefronts, environments, status lifecycle, and public SDK keys.
           </p>
         </div>
 
         <div className="flex items-center space-x-3 self-start sm:self-auto">
           {/* Status Filter Tabs */}
-          <div className="flex space-x-1 bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs font-semibold">
+          <div className="flex space-x-1 bg-neutral-900 border border-neutral-800 p-1 rounded-xl text-xs font-medium">
             {(['all', 'active', 'paused', 'archived'] as const).map(st => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
                 className={`px-2.5 py-1 rounded-lg uppercase transition ${
-                  statusFilter === st ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                  statusFilter === st ? 'bg-neutral-800 text-white font-semibold' : 'text-neutral-400 hover:text-white'
                 }`}
               >
                 {st}
@@ -92,7 +96,7 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
           {canManageKeys() && (
             <button
               onClick={() => setModalOpen(true)}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/30 transition flex items-center space-x-2"
+              className="px-4 py-2 bg-white text-black hover:bg-neutral-100 rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5"
             >
               <Plus className="h-4 w-4" />
               <span>New Project</span>
@@ -121,12 +125,12 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
             return (
               <div 
                 key={proj.id}
-                className={`bg-slate-900/90 border rounded-2xl p-6 shadow-xl flex flex-col justify-between transition relative overflow-hidden ${
-                  isActive ? 'border-blue-500/60 ring-1 ring-blue-500/30' : 'border-slate-800/80 hover:border-slate-700'
+                className={`bg-neutral-950 border rounded-2xl p-6 shadow-xl flex flex-col justify-between transition relative overflow-hidden ${
+                  isActive ? 'border-blue-500/60 ring-1 ring-blue-500/30' : 'border-neutral-800 hover:border-neutral-700'
                 }`}
               >
                 {isActive && (
-                  <div className="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-extrabold uppercase px-3 py-1 rounded-bl-xl tracking-wider">
+                  <div className="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-semibold uppercase px-3 py-1 rounded-bl-xl tracking-wider">
                     Current Active
                   </div>
                 )}
@@ -134,22 +138,22 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <h3 className="text-base font-bold text-white tracking-tight">{proj.name}</h3>
+                      <h3 className="text-base font-semibold text-white tracking-tight">{proj.name}</h3>
                       <a 
                         href={proj.websiteUrl} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="text-xs text-slate-400 hover:text-blue-400 flex items-center space-x-1.5 transition"
+                        className="text-xs text-neutral-400 hover:text-blue-400 flex items-center space-x-1.5 transition"
                       >
-                        <Globe className="h-3.5 w-3.5 text-slate-500" />
+                        <Globe className="h-3.5 w-3.5 text-neutral-500" />
                         <span className="truncate max-w-[180px]">{proj.websiteUrl}</span>
-                        <ExternalLink className="h-3 w-3 text-slate-500" />
+                        <ExternalLink className="h-3 w-3 text-neutral-500" />
                       </a>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
                       proj.environment === 'production' 
                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                         : proj.environment === 'staging'
@@ -159,25 +163,25 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
                       {proj.environment}
                     </span>
 
-                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      projStatus === 'active' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-slate-800 text-slate-400'
+                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                      projStatus === 'active' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-neutral-900 text-neutral-400'
                     }`}>
                       {projStatus}
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-neutral-400 line-clamp-2 leading-relaxed">
                     {proj.description || 'No description provided.'}
                   </p>
 
                   {/* Public SDK Key Display */}
-                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Public Write Key</span>
-                    <div className="flex items-center justify-between font-mono text-xs text-slate-200">
+                  <div className="bg-black p-3 rounded-xl border border-neutral-800 space-y-1">
+                    <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">Public Write Key</span>
+                    <div className="flex items-center justify-between font-mono text-xs text-neutral-200">
                       <span className="truncate max-w-[180px]">{primaryKey}</span>
                       <button
                         onClick={() => handleCopy(primaryKey, proj.id)}
-                        className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition"
+                        className="p-1 text-neutral-400 hover:text-white hover:bg-neutral-900 rounded transition"
                       >
                         {copiedKeyId === proj.id ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                       </button>
@@ -186,12 +190,12 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
                 </div>
 
                 {/* Status Selector & Actions */}
-                <div className="pt-5 mt-5 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                <div className="pt-5 mt-5 border-t border-neutral-800 flex items-center justify-between gap-2">
                   <select
                     value={projStatus}
                     disabled={!canManageKeys()}
                     onChange={(e) => updateProjectStatus(proj.id, e.target.value as any)}
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 font-semibold focus:outline-none cursor-pointer disabled:opacity-50"
+                    className="bg-black border border-neutral-800 rounded-xl px-2.5 py-1.5 text-xs text-neutral-300 font-medium focus:outline-none cursor-pointer disabled:opacity-50"
                   >
                     <option value="active">Active</option>
                     <option value="paused">Paused</option>
@@ -204,8 +208,8 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
                       disabled={isActive}
                       className={`py-1.5 px-3 rounded-xl text-xs font-semibold transition ${
                         isActive 
-                          ? 'bg-slate-800 text-slate-400 cursor-default' 
-                          : 'bg-blue-600 text-white hover:bg-blue-500 shadow-md'
+                          ? 'bg-neutral-900 text-neutral-500 cursor-default' 
+                          : 'bg-white text-black hover:bg-neutral-100 shadow-sm'
                       }`}
                     >
                       {isActive ? 'Active' : 'Select'}
@@ -215,7 +219,7 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
                         switchProject(proj.id);
                         onNavigate('integrations');
                       }}
-                      className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition"
+                      className="p-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 rounded-xl transition"
                       title="SDK Setup & Verification"
                     >
                       <Code2 className="h-4 w-4" />
@@ -230,54 +234,54 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
 
       {/* CREATE PROJECT MODAL */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
               <div className="flex items-center space-x-2">
-                <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                <div className="p-2 rounded-xl bg-neutral-900 border border-neutral-800 text-blue-500">
                   <FolderKanban className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-white">Create Customer Project</h3>
+                <h3 className="text-lg font-semibold text-white">Create Customer Project</h3>
               </div>
-              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-lg">
+              <button onClick={() => setModalOpen(false)} className="text-neutral-400 hover:text-white p-1 hover:bg-neutral-900 rounded-lg">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateProject} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Project Name *</label>
+                <label className="block text-xs font-medium text-neutral-300 mb-1">Project Name *</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-black border border-neutral-800 rounded-xl text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="e.g. My E-Commerce Storefront"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Website URL *</label>
+                <label className="block text-xs font-medium text-neutral-300 mb-1">Website URL *</label>
                 <div className="relative">
-                  <Globe className="h-4 w-4 text-slate-500 absolute left-3 top-3" />
+                  <Globe className="h-4 w-4 text-neutral-500 absolute left-3 top-3" />
                   <input
                     type="url"
                     required
                     value={websiteUrl}
                     onChange={e => setWebsiteUrl(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-black border border-neutral-800 rounded-xl text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                     placeholder="https://shop.example.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Environment *</label>
+                <label className="block text-xs font-medium text-neutral-300 mb-1">Environment *</label>
                 <select
                   value={environment}
                   onChange={e => setEnvironment(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  className="w-full px-3.5 py-2.5 bg-black border border-neutral-800 rounded-xl text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                 >
                   <option value="production">Production (Live)</option>
                   <option value="staging">Staging</option>
@@ -286,27 +290,27 @@ export default function CustomerProjects({ onNavigate }: CustomerProjectsProps) 
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Description</label>
+                <label className="block text-xs font-medium text-neutral-300 mb-1">Description</label>
                 <textarea
                   rows={2}
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3.5 py-2.5 bg-black border border-neutral-800 rounded-xl text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
                   placeholder="Primary web application analytics..."
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-end space-x-3">
+              <div className="pt-3 border-t border-neutral-800 flex items-center justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold"
+                  className="px-4 py-2 bg-neutral-900 text-neutral-300 rounded-xl text-xs font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/30 transition"
+                  className="px-4 py-2 bg-white text-black hover:bg-neutral-100 rounded-xl text-xs font-semibold shadow-sm transition"
                 >
                   Create Project
                 </button>

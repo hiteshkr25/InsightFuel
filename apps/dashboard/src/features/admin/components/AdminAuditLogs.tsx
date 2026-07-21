@@ -1,94 +1,125 @@
 import { useState } from 'react';
 import { useAuthStore, AuditLogEntry } from '../../../shared/stores/useAuthStore';
 import { 
-  ShieldCheck, 
-  Search, 
-  Clock
+  FileText, 
+  Search
 } from 'lucide-react';
 
 export default function AdminAuditLogs() {
   const { auditLogs } = useAuthStore();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'warning' | 'error'>('all');
 
-  const filteredLogs = auditLogs.filter(l => 
-    l.actorEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    l.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    l.details.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = auditLogs.filter((l: AuditLogEntry) => {
+    const matchesSearch = 
+      l.actorEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.target.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (l.details || '').toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || l.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans text-neutral-100">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center space-x-2.5">
-            <ShieldCheck className="h-6 w-6 text-rose-500" />
+          <h1 className="text-xl font-semibold text-white tracking-tight flex items-center space-x-2">
+            <FileText className="h-5 w-5 text-red-500" />
             <span>Platform Security Audit Logs</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Immutable chronological audit log tracking platform events, administrative actions, and security events.
+          <p className="text-xs text-neutral-400 mt-1">
+            Immutable audit record of administrative actions, key rotations, customer suspensions, and API gateway requests.
           </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full sm:w-72">
-          <Search className="h-4 w-4 text-slate-500 absolute left-3 top-3" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search action, actor, details..."
-            className="w-full pl-9 pr-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"
-          />
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <Search className="h-3.5 w-3.5 text-neutral-500 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search audit logs..."
+              className="pl-8 pr-3 py-1.5 bg-black border border-neutral-800 rounded-lg text-xs text-white placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="bg-black border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 font-medium focus:outline-none"
+          >
+            <option value="all">All Audit Statuses</option>
+            <option value="success">Success</option>
+            <option value="warning">Warning</option>
+            <option value="error">Error</option>
+          </select>
         </div>
       </div>
 
-      {/* Audit Logs Table */}
-      <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
-        <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white">Security Audit Log Trajectory ({filteredLogs.length})</h3>
+      {/* Logs Table Container */}
+      <div className="bg-neutral-950 border border-neutral-800 rounded-xl overflow-hidden shadow-xl">
+        <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
+            Audit Trajectory Stream ({filteredLogs.length})
+          </h3>
+          <span className="text-[10px] font-mono text-neutral-500">Immutable Log Stream</span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/60 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+          <table className="w-full text-left text-xs text-neutral-300">
+            <thead className="bg-black text-neutral-400 uppercase text-[10px] font-semibold border-b border-neutral-800">
               <tr>
-                <th className="py-3.5 px-6">Timestamp</th>
-                <th className="py-3.5 px-6">Actor Email</th>
-                <th className="py-3.5 px-6">Action Event</th>
-                <th className="py-3.5 px-6">Target Type</th>
-                <th className="py-3.5 px-6">Details Description</th>
-                <th className="py-3.5 px-6 text-right">IP Address</th>
+                <th className="py-3 px-4">Timestamp</th>
+                <th className="py-3 px-4">Actor Email</th>
+                <th className="py-3 px-4">Action</th>
+                <th className="py-3 px-4">Target Resource</th>
+                <th className="py-3 px-4">Details</th>
+                <th className="py-3 px-4">IP Address</th>
+                <th className="py-3 px-4 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono">
+            <tbody className="divide-y divide-neutral-900">
               {filteredLogs.map((log: AuditLogEntry) => (
-                <tr key={log.id} className="hover:bg-slate-850/50 transition text-[11px]">
-                  <td className="py-3.5 px-6 text-slate-400 flex items-center space-x-1.5">
-                    <Clock className="h-3 w-3 text-slate-500" />
-                    <span>{log.timestamp}</span>
+                <tr key={log.id} className="hover:bg-neutral-900/50 transition font-mono">
+                  <td className="py-3 px-4 text-neutral-400 text-[11px] whitespace-nowrap">
+                    {log.timestamp}
                   </td>
-                  <td className="py-3.5 px-6 text-blue-400 font-bold">
+
+                  <td className="py-3 px-4 font-semibold text-white font-sans">
                     {log.actorEmail}
                   </td>
-                  <td className="py-3.5 px-6">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase ${
-                      log.action.toLowerCase().includes('admin') || log.action.toLowerCase().includes('suspend')
-                        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                        : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                    }`}>
-                      {log.action}
-                    </span>
+
+                  <td className="py-3 px-4 font-semibold text-neutral-200 font-sans">
+                    {log.action}
                   </td>
-                  <td className="py-3.5 px-6 text-slate-400 uppercase">
-                    {log.targetType}
+
+                  <td className="py-3 px-4 text-blue-400">
+                    {log.target} {log.targetType ? `(${log.targetType})` : ''}
                   </td>
-                  <td className="py-3.5 px-6 text-slate-200 font-sans text-xs">
-                    {log.details}
+
+                  <td className="py-3 px-4 text-neutral-400 font-sans text-[11px]">
+                    {log.details || 'System event recorded.'}
                   </td>
-                  <td className="py-3.5 px-6 text-right text-slate-500">
+
+                  <td className="py-3 px-4 text-neutral-500">
                     {log.ipAddress}
+                  </td>
+
+                  <td className="py-3 px-4 text-right">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                      log.status === 'success' 
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                        : log.status === 'warning'
+                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    }`}>
+                      {log.status}
+                    </span>
                   </td>
                 </tr>
               ))}

@@ -8,6 +8,7 @@ import {
   ArrowLeft, 
   ChevronRight
 } from 'lucide-react';
+import { useThemeStore } from '../../../shared/stores/useThemeStore';
 
 interface DocsPortalProps {
   onBackToLanding: () => void;
@@ -24,6 +25,7 @@ interface DocArticle {
 }
 
 export default function DocsPortal({ onBackToLanding, onNavigateAuth }: DocsPortalProps) {
+  const { theme } = useThemeStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -103,29 +105,33 @@ export default function DocsPortal({ onBackToLanding, onNavigateAuth }: DocsPort
     setTimeout(() => setCopiedId(null), 2500);
   };
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
+    <div className={`min-h-screen font-sans antialiased ${isDark ? 'bg-black text-neutral-100' : 'bg-white text-neutral-900'}`}>
       
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <header className={`sticky top-0 z-50 border-b ${isDark ? 'bg-black border-neutral-800' : 'bg-white border-neutral-200'}`}>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={onBackToLanding}
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-slate-400 hover:text-white transition flex items-center space-x-1 text-xs font-semibold"
+              className={`p-1.5 border rounded-lg transition flex items-center space-x-1 text-xs font-medium ${
+                isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white' : 'bg-neutral-100 border-neutral-200 text-neutral-600 hover:text-black'
+              }`}
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back</span>
             </button>
             <div className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-blue-500" />
-              <span className="font-extrabold text-base text-white">InsightFuel Documentation</span>
+              <BookOpen className="h-4 w-4 text-blue-500" />
+              <span className="font-semibold text-sm">Documentation</span>
             </div>
           </div>
 
           <button
             onClick={onNavigateAuth}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition"
+            className="px-4 py-2 bg-neutral-100 hover:bg-white text-black rounded-lg text-xs font-semibold transition shadow-sm"
           >
             Open Dashboard →
           </button>
@@ -133,31 +139,37 @@ export default function DocsPortal({ onBackToLanding, onNavigateAuth }: DocsPort
       </header>
 
       {/* Docs Body Container */}
-      <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
         
         {/* Sidebar Nav Categories */}
         <div className="space-y-4">
           
           {/* Interactive Search Bar */}
           <div className="relative">
-            <Search className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
+            <Search className="h-3.5 w-3.5 text-neutral-500 absolute left-3.5 top-3" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search documentation..."
-              className="w-full pl-10 pr-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full pl-9 pr-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                isDark ? 'bg-neutral-950 border-neutral-800 text-white placeholder-neutral-500' : 'bg-white border-neutral-200 text-neutral-900 placeholder-neutral-400'
+              }`}
             />
           </div>
 
           {/* Categories Filter list */}
-          <div className="space-y-1 bg-slate-900/60 p-2 rounded-2xl border border-slate-800/80 text-xs font-semibold">
+          <div className={`space-y-1 p-2 rounded-xl border text-xs font-medium ${
+            isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-neutral-50 border-neutral-200'
+          }`}>
             {['all', 'Quick Start', 'Installation', 'SDK Guides', 'Tracking Events', 'API Reference', 'Troubleshooting'].map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`w-full text-left px-3 py-2 rounded-xl transition flex items-center justify-between ${
-                  activeCategory === cat ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                className={`w-full text-left px-3 py-1.5 rounded-lg transition flex items-center justify-between ${
+                  activeCategory === cat 
+                    ? (isDark ? 'bg-neutral-800 text-white font-semibold' : 'bg-neutral-200 text-neutral-900 font-semibold')
+                    : (isDark ? 'text-neutral-400 hover:text-white' : 'text-neutral-600 hover:text-neutral-900')
                 }`}
               >
                 <span className="capitalize">{cat}</span>
@@ -170,34 +182,40 @@ export default function DocsPortal({ onBackToLanding, onNavigateAuth }: DocsPort
         {/* Documentation Content Articles */}
         <div className="lg:col-span-3 space-y-6">
           {filteredDocs.length === 0 ? (
-            <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
-              <AlertCircle className="h-8 w-8 text-amber-400 mx-auto" />
-              <h3 className="text-base font-bold text-white">No documentation topics matched '{searchQuery}'</h3>
-              <p className="text-xs text-slate-400">Try searching for 'React', 'Installation', 'API', or 'CORS'.</p>
+            <div className={`p-10 text-center border rounded-xl space-y-2 ${
+              isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-neutral-50 border-neutral-200'
+            }`}>
+              <AlertCircle className="h-6 w-6 text-amber-500 mx-auto" />
+              <h3 className="text-sm font-semibold text-white">No topics matched '{searchQuery}'</h3>
+              <p className="text-xs text-neutral-500">Try searching for 'React', 'Installation', 'API', or 'CORS'.</p>
             </div>
           ) : (
             filteredDocs.map(article => (
-              <article key={article.id} className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xl space-y-4">
+              <article key={article.id} className={`border rounded-xl p-6 space-y-4 ${
+                isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-white border-neutral-200 shadow-sm'
+              }`}>
                 <div className="flex items-center space-x-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-extrabold uppercase">
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-900 text-blue-400 border border-neutral-800 text-[10px] font-semibold uppercase">
                     {article.category}
                   </span>
                 </div>
 
                 <div className="space-y-1">
-                  <h2 className="text-xl font-bold text-white tracking-tight">{article.title}</h2>
-                  <p className="text-xs text-slate-400">{article.summary}</p>
+                  <h2 className="text-lg font-semibold text-white tracking-tight">{article.title}</h2>
+                  <p className="text-xs text-neutral-400">{article.summary}</p>
                 </div>
 
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-neutral-300 leading-relaxed">
                   {article.content}
                 </p>
 
                 {article.codeSnippet && (
-                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-blue-200 relative group overflow-x-auto leading-relaxed">
+                  <div className={`p-4 rounded-lg border font-mono text-xs text-blue-300 relative group overflow-x-auto leading-relaxed ${
+                    isDark ? 'bg-black border-neutral-800' : 'bg-neutral-950 text-blue-200 border-neutral-900'
+                  }`}>
                     <button
                       onClick={() => handleCopy(article.codeSnippet!, article.id)}
-                      className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-400 hover:text-white transition"
+                      className="absolute top-3 right-3 p-1 bg-neutral-900 border border-neutral-800 rounded text-neutral-400 hover:text-white transition"
                     >
                       {copiedId === article.id ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                     </button>

@@ -1,324 +1,276 @@
-import { useState } from 'react';
-import { useAuthStore } from '../stores/useAuthStore';
+import React, { useState } from 'react';
+import { useAuthStore, Organization, Project } from '../stores/useAuthStore';
+import { useThemeStore } from '../stores/useThemeStore';
 import { 
-  Home, 
+  LayoutDashboard, 
   FolderKanban, 
+  BarChart3, 
   Key, 
-  Boxes, 
-  LineChart, 
+  Code2, 
   Users, 
   Settings, 
   LogOut, 
-  User, 
-  Menu, 
-  X, 
-  Sparkles, 
-  ShieldAlert, 
-  CheckCircle2,
+  Building2, 
+  Sparkles,
   ChevronDown,
-  Building2,
-  Cpu,
-  HelpCircle,
-  Code2
+  Sun,
+  Moon,
+  Compass
 } from 'lucide-react';
-import OnboardingWizard7Step from './OnboardingWizard7Step';
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
   activeView: string;
   onViewChange: (view: string) => void;
-  onLaunchOnboarding?: () => void;
+  onLaunchOnboarding: () => void;
+  onNavigateLanding?: () => void;
 }
 
-export default function CustomerLayout({ children, activeView, onViewChange }: CustomerLayoutProps) {
+export default function CustomerLayout({ 
+  children, 
+  activeView, 
+  onViewChange,
+  onLaunchOnboarding,
+  onNavigateLanding
+}: CustomerLayoutProps) {
   const { 
     user, 
-    logout, 
-    activeOrgId, 
-    activeProjectId, 
     orgs, 
     projects, 
+    activeOrgId, 
+    activeProjectId, 
     switchOrganization, 
-    switchProject,
-    switchPortalMode,
-    resendVerification,
-    verificationSent
+    switchProject, 
+    logout 
   } = useAuthStore();
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme, toggleTheme } = useThemeStore();
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
-  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
 
-  const activeOrg = orgs.find(o => o.id === activeOrgId) || orgs[0];
-  const activeProj = projects.find(p => p.id === activeProjectId) || projects[0];
+  const activeOrg = orgs.find((o: Organization) => o.id === activeOrgId) || orgs[0];
+  const activeProject = projects.find((p: Project) => p.id === activeProjectId) || projects[0];
 
-  const navigation = [
-    { name: 'Overview', view: 'overview', icon: Home, tooltip: 'Executive business overview & AI insights' },
-    { name: 'Projects', view: 'projects', icon: FolderKanban, tooltip: 'Manage customer web projects & environments' },
-    { name: 'Analytics', view: 'analytics', icon: LineChart, tooltip: 'Visitor traffic & checkout conversion funnels' },
-    { name: 'API Keys', view: 'api-keys', icon: Key, tooltip: 'Production & Development public SDK keys' },
-    { name: 'SDK Installation', view: 'sdk-installation', icon: Code2, tooltip: 'Multi-framework installation code snippets' },
-    { name: 'Integrations', view: 'integrations', icon: Boxes, tooltip: 'Webhooks & third-party connectors' },
-    { name: 'Team', view: 'team', icon: Users, tooltip: 'Organization members & role permissions' },
-    { name: 'Settings', view: 'settings', icon: Settings, tooltip: 'Account, organization & subscription billing' },
+  const handleLogout = () => {
+    logout();
+    if (onNavigateLanding) {
+      onNavigateLanding();
+    }
+  };
+
+  const navItems = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'projects', label: 'Projects', icon: FolderKanban },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'api-keys', label: 'API Keys', icon: Key },
+    { id: 'integrations', label: 'SDK Setup', icon: Code2 },
+    { id: 'team', label: 'Team', icon: Users },
+    { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans antialiased">
+    <div className={`min-h-screen flex font-sans ${isDark ? 'bg-black text-neutral-100' : 'bg-white text-neutral-900'}`}>
       
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Navigation */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800/80 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:h-screen
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800/80 bg-slate-950/60">
-          <div className="flex items-center space-x-2.5">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-md shadow-blue-500/20 border border-blue-400/20">
-              <Sparkles className="h-4.5 w-4.5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-base tracking-tight leading-none text-white">
-                Insight<span className="text-blue-500">Fuel</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5">
-                Business Analytics
-              </span>
-            </div>
-          </div>
-          <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Organization / Project Selector */}
-        <div className="p-3.5 border-b border-slate-800/80 bg-slate-950/40 relative">
-          <button
-            onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
-            className="w-full bg-slate-950 hover:bg-slate-850 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between transition group"
-            title="Switch Organization Workspace"
+      {/* LEFT SIDEBAR */}
+      <aside className={`w-64 flex-shrink-0 flex flex-col border-r ${
+        isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-neutral-50 border-neutral-200'
+      }`}>
+        
+        {/* Brand Logo Header */}
+        <div className={`h-16 px-5 flex items-center justify-between border-b ${
+          isDark ? 'border-neutral-800' : 'border-neutral-200'
+        }`}>
+          <div 
+            onClick={() => onNavigateLanding && onNavigateLanding()} 
+            className="flex items-center space-x-2.5 cursor-pointer select-none"
+            title="Go to Home"
           >
-            <div className="flex items-center space-x-2.5 truncate">
-              <div className="h-7 w-7 rounded-lg bg-blue-950/60 border border-blue-800/50 flex items-center justify-center text-blue-400 font-bold text-xs">
-                <Building2 className="h-4 w-4" />
-              </div>
-              <div className="truncate text-left">
-                <p className="text-xs font-semibold text-white truncate max-w-[130px]">
-                  {activeOrg?.name || 'My Organization'}
-                </p>
-                <p className="text-[10px] text-slate-400 truncate max-w-[130px]">
-                  {activeProj?.name || 'No Active Project'}
-                </p>
-              </div>
+            <div className="h-7 w-7 rounded-lg bg-neutral-900 border border-neutral-700 flex items-center justify-center text-white">
+              <Sparkles className="h-4 w-4 text-blue-500" />
             </div>
-            <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-white transition" />
-          </button>
-
-          {/* Org & Project Dropdown Menu */}
-          {orgDropdownOpen && (
-            <div className="absolute left-3.5 right-3.5 top-16 z-50 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-2 space-y-2 animate-in fade-in duration-100">
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Organizations</p>
-                {orgs.map(org => (
-                  <button
-                    key={org.id}
-                    onClick={() => {
-                      switchOrganization(org.id);
-                      setOrgDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between transition ${
-                      org.id === activeOrgId ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className="truncate">{org.name}</span>
-                    {org.id === activeOrgId && <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />}
-                  </button>
-                ))}
-              </div>
-
-              <div className="pt-1 border-t border-slate-800">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Switch Project</p>
-                {projects.filter(p => p.orgId === activeOrgId).map(proj => (
-                  <button
-                    key={proj.id}
-                    onClick={() => {
-                      switchProject(proj.id);
-                      setOrgDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between transition ${
-                      proj.id === activeProjectId ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className="truncate">{proj.name}</span>
-                    {proj.id === activeProjectId && <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            <span className="font-semibold text-base tracking-tight">
+              Insight<span className="text-blue-500">Fuel</span>
+            </span>
+          </div>
         </div>
 
-        {/* 8 Business Navigation Links */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navigation.map(item => {
+        {/* Workspace & Project Switchers */}
+        <div className="p-4 space-y-2.5 border-b border-neutral-800/60">
+          
+          {/* Organization Switcher */}
+          <div className="relative">
+            <label className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block mb-1">Organization</label>
+            <button
+              onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
+              className={`w-full px-3 py-2 rounded-lg border text-xs font-medium flex items-center justify-between transition ${
+                isDark ? 'bg-neutral-900 border-neutral-800 hover:border-neutral-700 text-white' : 'bg-white border-neutral-200 hover:border-neutral-300 text-neutral-900'
+              }`}
+            >
+              <div className="flex items-center space-x-2 truncate">
+                <Building2 className="h-3.5 w-3.5 text-neutral-400 flex-shrink-0" />
+                <span className="truncate">{activeOrg?.name || 'My Organization'}</span>
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-neutral-400" />
+            </button>
+
+            {orgDropdownOpen && (
+              <div className={`absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border shadow-lg py-1 ${
+                isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-200' : 'bg-white border-neutral-200 text-neutral-800'
+              }`}>
+                {orgs.map((o: Organization) => (
+                  <button
+                    key={o.id}
+                    onClick={() => {
+                      switchOrganization(o.id);
+                      setOrgDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-neutral-800/50 flex items-center justify-between ${
+                      o.id === activeOrgId ? 'text-blue-500 font-semibold' : ''
+                    }`}
+                  >
+                    <span>{o.name}</span>
+                    <span className="text-[10px] text-neutral-500 uppercase">{o.plan}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Project Switcher */}
+          <div className="relative">
+            <label className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block mb-1">Project</label>
+            <button
+              onClick={() => setProjectDropdownOpen(!projectDropdownOpen)}
+              className={`w-full px-3 py-2 rounded-lg border text-xs font-medium flex items-center justify-between transition ${
+                isDark ? 'bg-neutral-900 border-neutral-800 hover:border-neutral-700 text-white' : 'bg-white border-neutral-200 hover:border-neutral-300 text-neutral-900'
+              }`}
+            >
+              <div className="flex items-center space-x-2 truncate">
+                <FolderKanban className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                <span className="truncate">{activeProject?.name || 'Primary Storefront'}</span>
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-neutral-400" />
+            </button>
+
+            {projectDropdownOpen && (
+              <div className={`absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border shadow-lg py-1 ${
+                isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-200' : 'bg-white border-neutral-200 text-neutral-800'
+              }`}>
+                {projects.map((p: Project) => (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      switchProject(p.id);
+                      setProjectDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-neutral-800/50 ${
+                      p.id === activeProjectId ? 'text-blue-500 font-semibold' : ''
+                    }`}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar Nav Links */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {navItems.map((item) => {
             const Icon = item.icon;
-            const active = activeView === item.view;
+            const isActive = activeView === item.id;
             return (
               <button
-                key={item.name}
-                onClick={() => {
-                  onViewChange(item.view);
-                  setSidebarOpen(false);
-                }}
-                title={item.tooltip}
-                className={`
-                  w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 group relative
-                  ${active 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25 border border-blue-500/30' 
-                    : 'text-slate-400 hover:bg-slate-800/80 hover:text-white'
-                  }
-                `}
+                key={item.id}
+                onClick={() => onViewChange(item.id)}
+                className={`w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-2.5 transition ${
+                  isActive 
+                    ? (isDark ? 'bg-neutral-800 text-white font-semibold' : 'bg-neutral-200 text-neutral-900 font-semibold')
+                    : (isDark ? 'text-neutral-400 hover:text-white hover:bg-neutral-900' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100')
+                }`}
               >
-                <Icon className={`h-4.5 w-4.5 ${active ? 'text-white' : 'text-slate-400'}`} />
-                <span>{item.name}</span>
+                <Icon className={`h-4 w-4 ${isActive ? 'text-blue-500' : 'text-neutral-400'}`} />
+                <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Guided Setup Wizard Trigger Button */}
-        <div className="p-3 border-t border-slate-800/80 bg-slate-950/40 space-y-2">
-          <button
-            onClick={() => setOnboardingOpen(true)}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md transition"
-            title="Launch 7-step guided setup wizard"
-          >
-            <HelpCircle className="h-3.5 w-3.5" />
-            <span>Guided Setup Wizard</span>
-          </button>
-
-          {/* Admin Switcher */}
-          <button
-            onClick={() => switchPortalMode('admin')}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-blue-400 hover:border-blue-500/40 transition text-[11px] font-medium"
-            title="Switch to Developer Console"
-          >
-            <Cpu className="h-3.5 w-3.5 text-blue-400" />
-            <span>Switch to Platform Admin</span>
-          </button>
-        </div>
-
-        {/* User Profile Footer */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/80 flex items-center justify-between">
-          <div className="flex items-center space-x-3 truncate">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} className="h-8.5 w-8.5 rounded-full object-cover border border-slate-700" />
-            ) : (
-              <div className="h-8.5 w-8.5 rounded-full bg-blue-900/60 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold text-xs">
-                <User className="h-4 w-4" />
-              </div>
-            )}
-            <div className="truncate">
-              <p className="text-xs font-semibold text-white truncate max-w-[110px]">
-                {user?.name || 'Customer User'}
-              </p>
-              <p className="text-[10px] text-slate-400 truncate max-w-[110px]">
-                {user?.email || 'user@company.com'}
-              </p>
+        {/* SIMPLIFIED CUSTOMER SIDEBAR BOTTOM SECTION */}
+        <div className={`p-4 border-t ${isDark ? 'border-neutral-800 bg-neutral-950' : 'border-neutral-200 bg-neutral-50'}`}>
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 pr-2">
+              <p className="text-xs font-medium text-white truncate">{user?.name || 'Customer'}</p>
+              <p className="text-[10px] text-neutral-400 truncate">{user?.email}</p>
+            </div>
+            
+            <div className="flex items-center space-x-1 flex-shrink-0">
+              <button
+                onClick={() => onViewChange('settings')}
+                className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-md transition"
+                title="Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="p-1.5 text-neutral-400 hover:text-red-400 hover:bg-neutral-800 rounded-md transition"
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           </div>
-          <button 
-            onClick={logout}
-            className="text-slate-400 hover:text-red-400 transition p-2 hover:bg-slate-800 rounded-xl"
-            title="Sign Out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
         </div>
+
       </aside>
 
-      {/* Main Content Workspace Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen relative bg-slate-950">
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col min-w-0">
         
         {/* Top Header Bar */}
-        <header className="h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between px-6 sticky top-0 z-30 shadow-md">
-          <div className="flex items-center space-x-4">
-            <button 
-              className="lg:hidden p-2 hover:bg-slate-800 rounded-xl text-slate-400" 
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-
-            {/* Active Project Breadcrumb */}
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="text-slate-400 font-medium">{activeOrg?.name}</span>
-              <span className="text-slate-600">/</span>
-              <span className="text-white font-semibold flex items-center space-x-1.5 bg-slate-800/60 px-2.5 py-1 rounded-lg border border-slate-700/50">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{activeProj?.name}</span>
-              </span>
-            </div>
+        <header className={`h-16 px-8 flex items-center justify-between border-b ${
+          isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-white border-neutral-200'
+        }`}>
+          
+          <div className="flex items-center space-x-3">
+            <h1 className="text-base font-semibold tracking-tight capitalize">{activeView.replace('-', ' ')}</h1>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
+            
+            {/* Guided Onboarding Launch button */}
             <button
-              onClick={() => onViewChange('sdk-installation')}
-              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 text-xs font-semibold transition"
-              title="SDK Code Snippets & Verification"
+              onClick={onLaunchOnboarding}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center space-x-1.5 ${
+                isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:text-white' : 'bg-neutral-100 border-neutral-200 text-neutral-700 hover:text-neutral-900'
+              }`}
             >
-              <Code2 className="h-3.5 w-3.5" />
-              <span>SDK Installation</span>
+              <Compass className="h-3.5 w-3.5 text-blue-500" />
+              <span>Setup Guide</span>
+            </button>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg border transition ${
+                isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:text-white' : 'bg-neutral-100 border-neutral-200 text-neutral-700 hover:text-black'
+              }`}
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-neutral-600" />}
             </button>
           </div>
         </header>
 
-        {/* Verification Alert Banner */}
-        {!user?.emailVerified && (
-          <div className="bg-amber-950/40 border-b border-amber-900/50 px-6 py-2.5 flex items-center justify-between text-xs text-amber-200 font-medium">
-            <div className="flex items-center space-x-2">
-              <ShieldAlert className="h-4 w-4 text-amber-400 flex-shrink-0" />
-              <span>
-                Please verify your email address (<strong>{user?.email}</strong>) to enable live event ingestion.
-              </span>
-            </div>
-            <button
-              onClick={resendVerification}
-              className="px-3 py-1 bg-amber-900/60 hover:bg-amber-900 text-amber-200 border border-amber-700/50 rounded-lg transition text-[11px] font-semibold flex items-center space-x-1"
-            >
-              {verificationSent ? (
-                <>
-                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                  <span>Verification Email Sent!</span>
-                </>
-              ) : (
-                <span>Resend Verification Email</span>
-              )}
-            </button>
-          </div>
-        )}
-
-        {/* Dynamic SaaS Page Body */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">
+        {/* Page Content Viewport */}
+        <main className="flex-1 p-8 overflow-y-auto">
           {children}
         </main>
       </div>
-
-      {/* 7-Step Onboarding Wizard Modal */}
-      {onboardingOpen && (
-        <OnboardingWizard7Step
-          onComplete={() => onViewChange('overview')}
-          onClose={() => setOnboardingOpen(false)}
-        />
-      )}
     </div>
   );
 }

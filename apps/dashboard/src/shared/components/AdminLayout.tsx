@@ -1,18 +1,18 @@
-import { useState } from 'react';
+import React from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useThemeStore } from '../stores/useThemeStore';
 import { 
-  LayoutDashboard, 
+  ShieldCheck, 
   Users, 
   FolderKanban, 
   Key, 
   Activity, 
   BarChart3, 
-  ShieldCheck, 
+  FileText, 
   LogOut, 
-  Shield, 
-  Menu, 
-  X, 
-  Eye
+  ArrowRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -23,170 +23,124 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, activeView, onViewChange }: AdminLayoutProps) {
   const { user, logout, switchPortalMode } = useAuthStore();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme, toggleTheme } = useThemeStore();
 
-  const navigation = [
-    { name: 'Admin Dashboard', view: 'admin-overview', icon: LayoutDashboard },
-    { name: 'Customer Management', view: 'admin-customers', icon: Users },
-    { name: 'All Projects', view: 'admin-projects', icon: FolderKanban },
-    { name: 'API Keys Control', view: 'admin-api-keys', icon: Key },
-    { name: 'Microservice Health', view: 'admin-services', icon: Activity },
-    { name: 'Usage Analytics', view: 'admin-usage', icon: BarChart3 },
-    { name: 'Platform Audit Logs', view: 'admin-audit-logs', icon: ShieldCheck },
+  const navItems = [
+    { id: 'admin-overview', label: 'SuperAdmin Dashboard', icon: ShieldCheck },
+    { id: 'admin-customers', label: 'Customer Management', icon: Users },
+    { id: 'admin-projects', label: 'Global Projects', icon: FolderKanban },
+    { id: 'admin-api-keys', label: 'API Keys Control', icon: Key },
+    { id: 'admin-services', label: 'Microservice Health', icon: Activity },
+    { id: 'admin-usage', label: 'Platform Usage', icon: BarChart3 },
+    { id: 'admin-audit-logs', label: 'Security Audit Logs', icon: FileText }
   ];
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans antialiased">
+    <div className={`min-h-screen flex font-sans ${isDark ? 'bg-black text-neutral-100' : 'bg-white text-neutral-900'}`}>
       
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Navigation */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-rose-900/30 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:h-screen
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        {/* Brand Operator Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-rose-900/40 bg-rose-950/20">
+      {/* SUPERADMIN SIDEBAR */}
+      <aside className={`w-64 flex-shrink-0 flex flex-col border-r ${
+        isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-neutral-50 border-neutral-200'
+      }`}>
+        
+        {/* Brand Header */}
+        <div className={`h-16 px-5 flex items-center justify-between border-b ${
+          isDark ? 'border-neutral-800' : 'border-neutral-200'
+        }`}>
           <div className="flex items-center space-x-2.5">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-rose-600 to-amber-500 flex items-center justify-center shadow-md shadow-rose-500/20 border border-rose-400/30">
-              <Shield className="h-4.5 w-4.5 text-white" />
+            <div className="h-7 w-7 rounded-lg bg-neutral-900 border border-neutral-700 flex items-center justify-center text-red-500">
+              <ShieldCheck className="h-4 w-4" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-base tracking-tight leading-none text-white">
-                Insight<span className="text-rose-500">Fuel</span>
-              </span>
-              <span className="text-[9px] text-rose-400 font-extrabold tracking-widest uppercase mt-0.5 flex items-center space-x-1">
-                <span>Platform Admin</span>
-              </span>
+            <div>
+              <span className="font-semibold text-sm tracking-tight block">InsightFuel</span>
+              <span className="text-[10px] text-red-400 font-semibold uppercase tracking-wider block">SuperAdmin Operator</span>
             </div>
-          </div>
-          <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Superadmin Badge Banner */}
-        <div className="p-3.5 border-b border-slate-800/80 bg-slate-950/60">
-          <div className="bg-rose-950/40 border border-rose-900/60 p-2.5 rounded-xl flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <ShieldCheck className="h-4 w-4 text-rose-400" />
-              <span className="text-xs font-bold text-white">Operator Console</span>
-            </div>
-            <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-extrabold uppercase tracking-wider shadow">
-              Superadmin
-            </span>
           </div>
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navigation.map(item => {
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {navItems.map((item) => {
             const Icon = item.icon;
-            const active = activeView === item.view;
+            const isActive = activeView === item.id;
+
             return (
               <button
-                key={item.name}
-                onClick={() => {
-                  onViewChange(item.view);
-                  setSidebarOpen(false);
-                }}
-                className={`
-                  w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150
-                  ${active 
-                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/25 border border-rose-500/30' 
-                    : 'text-slate-400 hover:bg-slate-800/80 hover:text-white'
-                  }
-                `}
+                key={item.id}
+                onClick={() => onViewChange(item.id)}
+                className={`w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-2.5 transition ${
+                  isActive 
+                    ? (isDark ? 'bg-neutral-800 text-white font-semibold' : 'bg-neutral-200 text-neutral-900 font-semibold')
+                    : (isDark ? 'text-neutral-400 hover:text-white hover:bg-neutral-900' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100')
+                }`}
               >
-                <Icon className={`h-4.5 w-4.5 ${active ? 'text-white' : 'text-slate-400'}`} />
-                <span>{item.name}</span>
+                <Icon className={`h-4 w-4 ${isActive ? 'text-red-500' : 'text-neutral-400'}`} />
+                <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* View as Customer CTA Button */}
-        <div className="p-3 border-t border-slate-800/80 bg-slate-950/40">
+        {/* Sidebar Bottom Controls */}
+        <div className={`p-4 border-t space-y-2 ${isDark ? 'border-neutral-800 bg-neutral-950' : 'border-neutral-200 bg-neutral-50'}`}>
           <button
             onClick={() => switchPortalMode('customer')}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 hover:text-blue-400 hover:border-blue-500/40 transition text-xs font-medium"
-            title="Inspect Customer SaaS Portal View"
+            className={`w-full py-1.5 px-3 rounded-lg border text-xs font-medium transition flex items-center justify-between ${
+              isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:text-white' : 'bg-white border-neutral-200 text-neutral-700 hover:text-black'
+            }`}
           >
-            <Eye className="h-3.5 w-3.5 text-blue-400" />
-            <span>View as Customer</span>
+            <span>Customer View</span>
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
+
+          <div className="flex items-center justify-between pt-2">
+            <div className="min-w-0 pr-2">
+              <p className="text-xs font-semibold text-white truncate">{user?.name || 'SuperAdmin'}</p>
+              <p className="text-[10px] text-neutral-500 truncate">{user?.email}</p>
+            </div>
+            
+            <button
+              onClick={logout}
+              className="p-1.5 text-neutral-400 hover:text-red-400 hover:bg-neutral-800 rounded-md transition"
+              title="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        {/* User Profile Footer */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/80 flex items-center justify-between">
-          <div className="flex items-center space-x-3 truncate">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} className="h-8.5 w-8.5 rounded-full object-cover border border-rose-500/40" />
-            ) : (
-              <div className="h-8.5 w-8.5 rounded-full bg-rose-900/60 border border-rose-500/30 flex items-center justify-center text-rose-300 font-bold text-xs">
-                <Shield className="h-4 w-4" />
-              </div>
-            )}
-            <div className="truncate">
-              <p className="text-xs font-semibold text-white truncate max-w-[110px]">
-                {user?.name || 'Superadmin'}
-              </p>
-              <p className="text-[10px] text-rose-400 font-mono truncate max-w-[110px]">
-                {user?.email || 'admin@insightfuel.io'}
-              </p>
-            </div>
-          </div>
-          <button 
-            onClick={logout}
-            className="text-slate-400 hover:text-red-400 transition p-2 hover:bg-slate-800 rounded-xl"
-            title="Sign Out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
       </aside>
 
-      {/* Main Admin Workspace */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen relative bg-slate-950">
+      {/* MAIN VIEWPORT */}
+      <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Operator Header */}
-        <header className="h-16 bg-slate-900/90 backdrop-blur-md border-b border-rose-900/30 flex items-center justify-between px-6 sticky top-0 z-30 shadow-md">
-          <div className="flex items-center space-x-4">
-            <button 
-              className="lg:hidden p-2 hover:bg-slate-800 rounded-xl text-slate-400" 
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="text-rose-400 font-bold uppercase tracking-wider flex items-center space-x-1">
-                <Shield className="h-3.5 w-3.5" />
-                <span>InsightFuel Core Platform</span>
-              </span>
-              <span className="text-slate-600">/</span>
-              <span className="text-white font-semibold bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
-                System Operator Console
-              </span>
-            </div>
+        {/* Top Header */}
+        <header className={`h-16 px-8 flex items-center justify-between border-b ${
+          isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-white border-neutral-200'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <ShieldCheck className="h-4 w-4 text-red-500" />
+            <h1 className="text-sm font-semibold tracking-tight">Platform Control Center</h1>
           </div>
 
-          <div className="flex items-center space-x-3 text-xs">
-            <span className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>All 8 Services Healthy</span>
-            </span>
+          <div className="flex items-center space-x-3">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg border transition ${
+                isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:text-white' : 'bg-neutral-100 border-neutral-200 text-neutral-700 hover:text-black'
+              }`}
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-neutral-600" />}
+            </button>
           </div>
         </header>
 
-        {/* Dynamic Admin Body */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">
+        {/* Content Body */}
+        <main className="flex-1 p-8 overflow-y-auto">
           {children}
         </main>
       </div>

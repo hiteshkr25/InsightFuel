@@ -1,46 +1,54 @@
 import { create } from 'zustand';
-
-export interface ApiKey {
-  id: string;
-  projectId: string;
-  key: string;
-  displayName: string;
-  environment: 'production' | 'staging' | 'development';
-  status: 'active' | 'deactivated' | 'rotated' | 'flagged';
-  createdAt: string;
-  lastUsedAt: string | null;
-  requestCount: number;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  orgId: string;
-  websiteUrl: string;
-  environment: 'production' | 'staging' | 'development';
-  description: string;
-  status: 'active' | 'paused' | 'archived';
-  createdAt: string;
-  eventCount: number;
-  sdkConnected: boolean;
-}
-
-export interface Organization {
-  id: string;
-  name: string;
-  ownerEmail: string;
-  createdAt: string;
-}
+import { persist } from 'zustand/middleware';
 
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  companyName: string;
-  role: 'superadmin' | 'owner' | 'admin' | 'developer' | 'viewer';
-  isSuperAdmin: boolean;
-  emailVerified: boolean;
+  role: 'owner' | 'admin' | 'developer' | 'viewer';
+  isSuperAdmin?: boolean;
   avatarUrl?: string;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  ownerEmail: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  createdAt: string;
+}
+
+export interface Project {
+  id: string;
+  orgId: string;
+  name: string;
+  websiteUrl: string;
+  environment: 'production' | 'staging' | 'development';
+  description?: string;
+  status?: 'active' | 'paused' | 'archived';
+  createdAt: string;
+  eventCount?: number;
+  framework?: string;
+}
+
+export interface ApiKey {
+  id: string;
+  projectId: string;
+  projectName?: string;
+  ownerEmail?: string;
+  displayName: string;
+  key: string;
+  environment: 'production' | 'development' | 'staging';
+  status: 'active' | 'disabled' | 'flagged';
+  createdAt: string;
+  lastUsedAt?: string;
+  requestCount?: number;
+}
+
+export interface GlobalApiKey extends ApiKey {
+  projectName: string;
+  ownerEmail: string;
 }
 
 export interface WorkspaceInvitation {
@@ -49,736 +57,747 @@ export interface WorkspaceInvitation {
   email: string;
   role: 'admin' | 'developer' | 'viewer';
   token: string;
-  status: 'pending' | 'accepted' | 'revoked';
+  status: 'pending' | 'accepted' | 'revoked' | 'expired';
   invitedByEmail: string;
   createdAt: string;
+  expiresAt: string;
 }
 
 export interface CustomerTenant {
   id: string;
   name: string;
   email: string;
+  organization: string;
   companyName: string;
-  orgId: string;
-  status: 'active' | 'suspended';
-  registeredAt: string;
+  projectCount: number;
   projectsCount: number;
+  monthlyEvents: string;
   eventVolume: number;
-  activeKeysCount: number;
+  registeredAt: string;
+  status: 'active' | 'suspended';
+  joinedDate: string;
 }
 
-export interface GlobalProject extends Project {
-  ownerEmail: string;
+export interface GlobalProject {
+  id: string;
+  name: string;
   orgName: string;
-  lastActive: string;
-}
-
-export interface GlobalApiKey extends ApiKey {
   ownerEmail: string;
-  projectName: string;
+  websiteUrl: string;
+  environment: 'production' | 'staging' | 'development';
+  status: 'active' | 'paused' | 'archived';
+  eventCount: number;
+  lastActive: string;
+  lastActivity: string;
+  sdkConnected: boolean;
 }
 
 export interface ServiceHealth {
   id: string;
   name: string;
-  directory: string;
-  status: 'healthy' | 'warning' | 'offline';
+  status: 'healthy' | 'degraded' | 'down';
+  latency: string;
   latencyMs: number;
   uptime: string;
+  port: number;
+  directory: string;
   lastHeartbeat: string;
 }
 
 export interface AuditLogEntry {
   id: string;
+  timestamp: string;
   actorEmail: string;
   action: string;
-  targetType: string;
-  targetId: string;
-  details: string;
+  target: string;
+  targetType?: string;
+  details?: string;
   ipAddress: string;
-  timestamp: string;
+  status: 'success' | 'warning' | 'error';
 }
 
-interface AuthState {
+export interface OnboardingChecklist {
+  orgCreated: boolean;
+  projectCreated: boolean;
+  keyGenerated: boolean;
+  sdkInstalled: boolean;
+  firstEventReceived: boolean;
+  dashboardExplored: boolean;
+}
+
+export type SupportedFramework = 'react' | 'next' | 'vue' | 'angular' | 'js' | 'node' | 'python' | 'other';
+export type AutoDetectionStatus = 'idle' | 'listening' | 'connected';
+
+interface AuthStoreState {
   token: string | null;
   isAuthenticated: boolean;
   user: UserProfile | null;
-  portalMode: 'customer' | 'admin' | 'superadmin';
-  activeOrgId: string;
-  activeProjectId: string;
   orgs: Organization[];
+  activeOrgId: string;
   projects: Project[];
+  activeProjectId: string;
   apiKeys: Record<string, ApiKey[]>;
   invitations: WorkspaceInvitation[];
-  verificationSent: boolean;
-
-  // Onboarding Wizard State
-  onboardingStep: number;
+  portalMode: 'customer' | 'superadmin';
   onboardingCompleted: boolean;
+  onboardingStep: number;
+  isSetupSkipped: boolean;
 
-  // Global Collections
+  // First Value SaaS Journey State
+  selectedFramework: SupportedFramework;
+  autoDetectionStatus: AutoDetectionStatus;
+  hasReceivedFirstEvent: boolean;
+  lastReceivedEvent: {
+    name: string;
+    timestamp: string;
+    project: string;
+    environment: string;
+    payload?: string;
+  } | null;
+  onboardingChecklist: OnboardingChecklist;
+
+  // SuperAdmin Data
   allCustomers: CustomerTenant[];
   allProjectsList: GlobalProject[];
   allApiKeysList: GlobalApiKey[];
   servicesHealth: ServiceHealth[];
   auditLogs: AuditLogEntry[];
 
-  // RBAC Helpers
+  // Actions
+  login: (email: string, isSuperAdmin?: boolean) => void;
+  logout: () => void;
+  switchOrganization: (orgId: string) => void;
+  switchProject: (projectId: string) => void;
+  switchPortalMode: (mode: 'customer' | 'superadmin') => void;
+  setSelectedFramework: (framework: SupportedFramework) => void;
+  createCustomerProject: (name: string, websiteUrl: string, environment: 'production' | 'staging' | 'development', description?: string, framework?: string) => void;
+  createProject: (name: string, websiteUrl: string, environment: 'production' | 'staging' | 'development', description?: string, framework?: string) => void;
+  updateProjectStatus: (projectId: string, status: 'active' | 'paused' | 'archived') => void;
+  createOrganization: (name: string) => void;
+  generateApiKey: (projectId: string, displayName: string, environment: 'production' | 'development' | 'staging') => void;
+  rotateApiKey: (keyId: string) => void;
+  toggleKeyStatus: (keyId: string) => void;
+  deleteApiKey: (keyId: string) => void;
+  inviteTeamMember: (email: string, role: 'admin' | 'developer' | 'viewer') => void;
+  revokeInvitation: (invitationId: string) => void;
+  acceptInvitation: (token: string) => void;
+  transferOwnership: (newOwnerEmail: string) => void;
+  completeOnboarding: () => void;
+  skipOnboarding: () => void;
+  reopenOnboarding: () => void;
+  setOnboardingStep: (step: number) => void;
+  
+  // Journey Ingestion Verification Actions
+  startAutoSdkDetection: () => void;
+  sendTestEvent: (eventName?: string) => void;
+  markChecklistStep: (stepKey: keyof OnboardingChecklist, value?: boolean) => void;
+
+  // SuperAdmin Management Actions
+  suspendCustomer: (customerId: string) => void;
+  reactivateCustomer: (customerId: string) => void;
+  deleteCustomer: (customerId: string) => void;
+  triggerPasswordReset: (email: string) => void;
+  revokeApiKey: (keyId: string) => void;
+  flagApiKeyAbuse: (keyId: string) => void;
+
+  // Permission Checks
   canManageBilling: () => boolean;
   canDeleteProject: () => boolean;
   canManageKeys: () => boolean;
   canInviteMembers: () => boolean;
-
-  // Authentication Actions
-  register: (name: string, email: string, password: string, companyName: string) => Promise<boolean>;
-  login: (email: string, _password?: string) => Promise<boolean>;
-  forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
-  resendVerification: () => void;
-  logout: () => void;
-
-  // Onboarding Actions
-  setOnboardingStep: (step: number) => void;
-  completeOnboarding: () => void;
-  resetOnboarding: () => void;
-
-  // Workspace & Navigation Actions
-  switchOrganization: (orgId: string) => void;
-  switchProject: (projectId: string) => void;
-  switchPortalMode: (mode: 'customer' | 'admin' | 'superadmin') => void;
-
-  // SaaS Project & Key Lifecycle Actions
-  createProject: (name: string, id: string) => void;
-  createCustomerProject: (name: string, websiteUrl: string, environment: 'production' | 'staging' | 'development', description: string) => Project;
-  updateProjectStatus: (projectId: string, status: 'active' | 'paused' | 'archived') => void;
-  deleteCustomerProject: (projectId: string) => void;
-  createCustomerOrganization: (orgName: string) => Organization;
-  generateApiKey: (projectId: string, displayName: string, environment: 'production' | 'staging' | 'development') => ApiKey;
-  rotateApiKey: (keyId: string) => ApiKey | null;
-  toggleKeyStatus: (keyId: string) => void;
-  deleteApiKey: (keyId: string) => void;
-  updateProfile: (name: string, companyName: string) => void;
-
-  // Team & Invitation Actions
-  inviteTeamMember: (email: string, role: 'admin' | 'developer' | 'viewer') => WorkspaceInvitation;
-  revokeInvitation: (invitationId: string) => void;
-  acceptInvitation: (token: string) => boolean;
-  transferOwnership: (newOwnerEmail: string) => void;
-
-  // Superadmin Actions
-  suspendCustomer: (userId: string) => void;
-  reactivateCustomer: (userId: string) => void;
-  deleteCustomer: (userId: string) => void;
-  triggerPasswordReset: (userId: string) => string;
-  revokeApiKey: (keyId: string) => void;
-  flagApiKeyAbuse: (keyId: string) => void;
-  recordAuditLog: (action: string, targetType: string, targetId: string, details: string) => void;
 }
 
-const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
-
-const safeStorage = {
-  getItem: (key: string) => isBrowser ? localStorage.getItem(key) : null,
-  setItem: (key: string, value: string) => { if (isBrowser) localStorage.setItem(key, value); },
-  removeItem: (key: string) => { if (isBrowser) localStorage.removeItem(key); }
-};
-
-const DEFAULT_ORGS: Organization[] = [
-  { id: 'org_acme', name: 'Acme E-Commerce Inc', ownerEmail: 'hitesh@acme.com', createdAt: '2026-01-15' },
-  { id: 'org_beta', name: 'Beta Dev Innovations', ownerEmail: 'demo@beta.io', createdAt: '2026-03-10' }
-];
-
-const DEFAULT_PROJECTS: Project[] = [
-  {
-    id: 'proj_ecommerce_prod',
-    name: 'Shopify Storefront Production',
-    orgId: 'org_acme',
-    websiteUrl: 'https://shop.acme.com',
-    environment: 'production',
-    description: 'Primary customer-facing web application and checkout funnel.',
-    status: 'active',
-    createdAt: '2026-02-01',
-    eventCount: 1245800,
-    sdkConnected: true
-  },
-  {
-    id: 'proj_ecommerce_dev',
-    name: 'Mobile App Staging',
-    orgId: 'org_acme',
-    websiteUrl: 'https://staging.acme.com',
-    environment: 'staging',
-    description: 'Internal testing environment for upcoming checkout features.',
-    status: 'active',
-    createdAt: '2026-03-05',
-    eventCount: 42100,
-    sdkConnected: true
-  },
-  {
-    id: 'proj_beta_portal',
-    name: 'Beta Cloud SaaS',
-    orgId: 'org_beta',
-    websiteUrl: 'https://app.beta.io',
-    environment: 'production',
-    description: 'SaaS user analytics & product engagement portal.',
-    status: 'active',
-    createdAt: '2026-03-12',
-    eventCount: 893000,
-    sdkConnected: false
-  }
-];
-
-const DEFAULT_API_KEYS: Record<string, ApiKey[]> = {
-  proj_ecommerce_prod: [
-    {
-      id: 'key_101',
-      projectId: 'proj_ecommerce_prod',
-      key: 'if_live_9f8a3c2b1e4d5f6a7b8c9d0e',
-      displayName: 'Production Public Key',
-      environment: 'production',
-      status: 'active',
-      createdAt: '2026-02-01',
-      lastUsedAt: '2 mins ago',
-      requestCount: 842100
-    },
-    {
-      id: 'key_102',
-      projectId: 'proj_ecommerce_prod',
-      key: 'if_test_1a2b3c4d5e6f7a8b9c0d1e2f',
-      displayName: 'Development Key',
-      environment: 'development',
-      status: 'active',
-      createdAt: '2026-02-15',
-      lastUsedAt: '15 mins ago',
-      requestCount: 403700
-    }
-  ]
-};
-
-const DEFAULT_USER: UserProfile = {
-  id: 'user_cust_101',
-  name: 'Hitesh Kumar',
-  email: 'hitesh@acme.com',
-  companyName: 'Acme E-Commerce Inc',
-  role: 'owner',
-  isSuperAdmin: false,
-  emailVerified: true,
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'
-};
-
-const INITIAL_INVITATIONS: WorkspaceInvitation[] = [
-  {
-    id: 'inv_101',
-    orgId: 'org_acme',
-    email: 'elena@techcorp.de',
-    role: 'viewer',
-    token: 'inv_tok_991827364',
-    status: 'pending',
-    invitedByEmail: 'hitesh@acme.com',
-    createdAt: '2026-03-18'
-  }
-];
-
-const INITIAL_CUSTOMERS: CustomerTenant[] = [
-  {
-    id: 'user_cust_101',
-    name: 'Hitesh Kumar',
-    email: 'hitesh@acme.com',
-    companyName: 'Acme E-Commerce Inc',
-    orgId: 'org_acme',
-    status: 'active',
-    registeredAt: '2026-01-15',
-    projectsCount: 2,
-    eventVolume: 1287900,
-    activeKeysCount: 3
-  }
-];
-
-const INITIAL_GLOBAL_PROJECTS: GlobalProject[] = [
-  {
-    id: 'proj_ecommerce_prod',
-    name: 'Shopify Storefront Production',
-    orgId: 'org_acme',
-    orgName: 'Acme E-Commerce Inc',
-    ownerEmail: 'hitesh@acme.com',
-    websiteUrl: 'https://shop.acme.com',
-    environment: 'production',
-    description: 'Primary customer-facing web application.',
-    status: 'active',
-    createdAt: '2026-02-01',
-    eventCount: 1245800,
-    sdkConnected: true,
-    lastActive: '2 mins ago'
-  }
-];
-
-const INITIAL_GLOBAL_KEYS: GlobalApiKey[] = [
-  {
-    id: 'key_101',
-    projectId: 'proj_ecommerce_prod',
-    projectName: 'Shopify Storefront Production',
-    ownerEmail: 'hitesh@acme.com',
-    key: 'if_live_9f8a3c2b1e4d5f6a7b8c9d0e',
-    displayName: 'Production Public Key',
-    environment: 'production',
-    status: 'active',
-    createdAt: '2026-02-01',
-    lastUsedAt: '2 mins ago',
-    requestCount: 842100
-  }
-];
-
-const INITIAL_SERVICES_HEALTH: ServiceHealth[] = [
-  { id: 'svc_gateway', name: 'API Gateway', directory: 'apps/api-gateway', status: 'healthy', latencyMs: 14, uptime: '99.99%', lastHeartbeat: '10s ago' },
-  { id: 'svc_query', name: 'Query API', directory: 'services/query-api', status: 'healthy', latencyMs: 18, uptime: '99.95%', lastHeartbeat: '8s ago' },
-  { id: 'svc_analytics', name: 'Analytics Service', directory: 'services/analytics', status: 'healthy', latencyMs: 22, uptime: '99.98%', lastHeartbeat: '12s ago' },
-  { id: 'svc_feature', name: 'Feature Intelligence', directory: 'services/feature-intelligence', status: 'healthy', latencyMs: 31, uptime: '99.90%', lastHeartbeat: '15s ago' },
-  { id: 'svc_health', name: 'Product Health', directory: 'services/product-health', status: 'healthy', latencyMs: 16, uptime: '99.99%', lastHeartbeat: '5s ago' },
-  { id: 'svc_ai', name: 'AI Engine', directory: 'services/ai-engine', status: 'healthy', latencyMs: 45, uptime: '99.92%', lastHeartbeat: '14s ago' },
-  { id: 'svc_ingestion', name: 'Ingestion Service', directory: 'services/ingestion', status: 'healthy', latencyMs: 12, uptime: '99.99%', lastHeartbeat: '3s ago' },
-  { id: 'svc_processor', name: 'Event Processor', directory: 'services/event-processor', status: 'healthy', latencyMs: 19, uptime: '99.97%', lastHeartbeat: '6s ago' }
-];
-
-const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
-  { id: 'log_101', actorEmail: 'hitesh@acme.com', action: 'Platform Registration', targetType: 'user', targetId: 'user_cust_101', details: 'Customer registered with Acme E-Commerce Inc', ipAddress: '72.14.201.5', timestamp: '10 mins ago' }
-];
-
-export const useAuthStore = create<AuthState>((set, get) => ({
-  token: safeStorage.getItem('token') || 'mock_customer_jwt_token_101',
-  isAuthenticated: !!safeStorage.getItem('token') || true,
-  user: safeStorage.getItem('user') ? JSON.parse(safeStorage.getItem('user')!) : DEFAULT_USER,
-  portalMode: (safeStorage.getItem('portalMode') as 'customer' | 'admin' | 'superadmin') || 'customer',
-  activeOrgId: safeStorage.getItem('activeOrgId') || 'org_acme',
-  activeProjectId: safeStorage.getItem('activeProjectId') || 'proj_ecommerce_prod',
-  orgs: DEFAULT_ORGS,
-  projects: DEFAULT_PROJECTS,
-  apiKeys: DEFAULT_API_KEYS,
-  invitations: INITIAL_INVITATIONS,
-  verificationSent: false,
-
-  onboardingStep: safeStorage.getItem('onboardingStep') ? parseInt(safeStorage.getItem('onboardingStep')!, 10) : 1,
-  onboardingCompleted: safeStorage.getItem('onboardingCompleted') === 'true',
-
-  allCustomers: INITIAL_CUSTOMERS,
-  allProjectsList: INITIAL_GLOBAL_PROJECTS,
-  allApiKeysList: INITIAL_GLOBAL_KEYS,
-  servicesHealth: INITIAL_SERVICES_HEALTH,
-  auditLogs: INITIAL_AUDIT_LOGS,
-
-  // RBAC Permission Helpers
-  canManageBilling: () => get().user?.role === 'owner' || get().user?.isSuperAdmin === true,
-  canDeleteProject: () => get().user?.role === 'owner' || get().user?.isSuperAdmin === true,
-  canManageKeys: () => get().user?.role === 'owner' || get().user?.role === 'admin' || get().user?.isSuperAdmin === true,
-  canInviteMembers: () => get().user?.role === 'owner' || get().user?.role === 'admin' || get().user?.isSuperAdmin === true,
-
-  register: async (name, email, _password, companyName) => {
-    try {
-      const newUserId = `user_${Date.now()}`;
-      const newOrgId = `org_${Date.now()}`;
-      const newProjId = `proj_${Date.now()}`;
-      const newKeyId = `key_${Date.now()}`;
-      const newSdkKey = `if_live_${Math.random().toString(36).substring(2, 14)}${Math.random().toString(36).substring(2, 14)}`;
-
-      const newUser: UserProfile = {
-        id: newUserId,
-        name,
-        email,
-        companyName: companyName || `${name}'s Company`,
+export const useAuthStore = create<AuthStoreState>()(
+  persist(
+    (set, get) => ({
+      token: 'mock_jwt_token_insightfuel',
+      isAuthenticated: true,
+      user: {
+        id: 'usr_owner_101',
+        name: 'Hitesh Kumar',
+        email: 'hitesh@insightfuel.io',
         role: 'owner',
-        isSuperAdmin: false,
-        emailVerified: false
-      };
+        isSuperAdmin: true,
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+      },
+      orgs: [
+        {
+          id: 'org_acme_1',
+          name: 'Acme E-Commerce Inc',
+          slug: 'acme-ecommerce',
+          ownerEmail: 'hitesh@insightfuel.io',
+          plan: 'pro',
+          createdAt: '2026-01-10'
+        },
+        {
+          id: 'org_beta_2',
+          name: 'Beta Dev Innovations',
+          slug: 'beta-dev',
+          ownerEmail: 'hitesh@insightfuel.io',
+          plan: 'free',
+          createdAt: '2026-02-01'
+        }
+      ],
+      activeOrgId: 'org_acme_1',
+      projects: [
+        {
+          id: 'proj_1',
+          orgId: 'org_acme_1',
+          name: 'Primary Web Storefront',
+          websiteUrl: 'https://shop.acme.com',
+          environment: 'production',
+          description: 'Main customer e-commerce web storefront analytics',
+          status: 'active',
+          createdAt: '2026-01-15',
+          eventCount: 142850,
+          framework: 'react'
+        },
+        {
+          id: 'proj_2',
+          orgId: 'org_acme_1',
+          name: 'Mobile Web Checkout App',
+          websiteUrl: 'https://m.acme.com',
+          environment: 'production',
+          description: 'Responsive mobile checkout portal tracking',
+          status: 'active',
+          createdAt: '2026-02-10',
+          eventCount: 89400,
+          framework: 'next'
+        },
+        {
+          id: 'proj_3',
+          orgId: 'org_beta_2',
+          name: 'Beta Sandbox Web',
+          websiteUrl: 'https://sandbox.beta.io',
+          environment: 'development',
+          description: 'Staging environment analytics testing',
+          status: 'active',
+          createdAt: '2026-03-01',
+          eventCount: 120,
+          framework: 'js'
+        }
+      ],
+      activeProjectId: 'proj_1',
+      apiKeys: {
+        proj_1: [
+          {
+            id: 'key_prod_1',
+            projectId: 'proj_1',
+            displayName: 'Production Web Write Key',
+            key: 'if_live_9f8a3c2b1e4d5f6a7b8c9d0e',
+            environment: 'production',
+            status: 'active',
+            createdAt: '2026-01-15',
+            lastUsedAt: '2 mins ago',
+            requestCount: 142850
+          },
+          {
+            id: 'key_dev_1',
+            projectId: 'proj_1',
+            displayName: 'Staging Test Key',
+            key: 'if_test_4a3b2c1d0e9f8a7b6c5d4e3f',
+            environment: 'development',
+            status: 'active',
+            createdAt: '2026-01-20',
+            lastUsedAt: '1 hour ago',
+            requestCount: 3820
+          }
+        ],
+        proj_2: [
+          {
+            id: 'key_prod_2',
+            projectId: 'proj_2',
+            displayName: 'Mobile Web Key',
+            key: 'if_live_7c6b5a4d3e2f1a0b9c8d7e6f',
+            environment: 'production',
+            status: 'active',
+            createdAt: '2026-02-10',
+            lastUsedAt: '5 mins ago',
+            requestCount: 89400
+          }
+        ],
+        proj_3: [
+          {
+            id: 'key_dev_3',
+            projectId: 'proj_3',
+            displayName: 'Sandbox Development Key',
+            key: 'if_test_1e2d3c4b5a6f7e8d9c0b1a2f',
+            environment: 'development',
+            status: 'active',
+            createdAt: '2026-03-01',
+            lastUsedAt: 'Yesterday',
+            requestCount: 120
+          }
+        ]
+      },
+      invitations: [
+        {
+          id: 'inv_101',
+          orgId: 'org_acme_1',
+          email: 'alex.dev@acme.com',
+          role: 'developer',
+          token: 'inv_tok_8f9a2b',
+          status: 'pending',
+          invitedByEmail: 'hitesh@insightfuel.io',
+          createdAt: '2026-07-20',
+          expiresAt: '2026-07-27'
+        }
+      ],
+      portalMode: 'customer',
+      onboardingCompleted: true,
+      onboardingStep: 1,
+      isSetupSkipped: false,
 
-      const newOrg: Organization = {
-        id: newOrgId,
-        name: companyName || `${name}'s Workspace`,
-        ownerEmail: email,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-
-      const newProject: Project = {
-        id: newProjId,
-        name: `${companyName || name}'s Storefront`,
-        orgId: newOrgId,
-        websiteUrl: 'https://mywebsite.com',
+      // Journey State Defaults
+      selectedFramework: 'react',
+      autoDetectionStatus: 'connected',
+      hasReceivedFirstEvent: true,
+      lastReceivedEvent: {
+        name: 'checkout_completed',
+        timestamp: 'Just now',
+        project: 'Primary Web Storefront',
         environment: 'production',
-        description: 'Primary customer web application',
-        status: 'active',
-        createdAt: new Date().toISOString().split('T')[0],
-        eventCount: 0,
-        sdkConnected: false
-      };
+        payload: '{"order_id": "ord_9421", "amount": 149.50}'
+      },
+      onboardingChecklist: {
+        orgCreated: true,
+        projectCreated: true,
+        keyGenerated: true,
+        sdkInstalled: true,
+        firstEventReceived: true,
+        dashboardExplored: true
+      },
 
-      const newApiKey: ApiKey = {
-        id: newKeyId,
-        projectId: newProjId,
-        key: newSdkKey,
-        displayName: 'Production Key',
-        environment: 'production',
-        status: 'active',
-        createdAt: new Date().toISOString().split('T')[0],
-        lastUsedAt: null,
-        requestCount: 0
-      };
+      allCustomers: [
+        { id: 'cust_1', name: 'Hitesh Kumar', email: 'hitesh@insightfuel.io', organization: 'Acme E-Commerce Inc', companyName: 'Acme E-Commerce Inc', projectCount: 2, projectsCount: 2, monthlyEvents: '232.2k', eventVolume: 232250, registeredAt: '2026-01-10', status: 'active', joinedDate: '2026-01-10' },
+        { id: 'cust_2', name: 'Sarah Connor', email: 'sarah@acme.com', organization: 'Acme E-Commerce Inc', companyName: 'Acme E-Commerce Inc', projectCount: 1, projectsCount: 1, monthlyEvents: '89.4k', eventVolume: 89400, registeredAt: '2026-02-10', status: 'active', joinedDate: '2026-02-10' },
+        { id: 'cust_3', name: 'Michael Scott', email: 'mscott@beta.io', organization: 'Beta Dev Innovations', companyName: 'Beta Dev Innovations', projectCount: 1, projectsCount: 1, monthlyEvents: '120', eventVolume: 120, registeredAt: '2026-03-01', status: 'active', joinedDate: '2026-03-01' }
+      ],
 
-      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const payload = btoa(JSON.stringify({ org_id: newOrgId, sub: newUserId, role: 'owner', exp: Math.floor(Date.now() / 1000) + 86400 }));
-      const mockJwt = `${header}.${payload}.signature`;
+      allProjectsList: [
+        { id: 'proj_1', name: 'Primary Web Storefront', orgName: 'Acme E-Commerce Inc', ownerEmail: 'hitesh@insightfuel.io', websiteUrl: 'https://shop.acme.com', environment: 'production', status: 'active', eventCount: 142850, lastActive: '2 mins ago', lastActivity: '2 mins ago', sdkConnected: true },
+        { id: 'proj_2', name: 'Mobile Web Checkout App', orgName: 'Acme E-Commerce Inc', ownerEmail: 'hitesh@insightfuel.io', websiteUrl: 'https://m.acme.com', environment: 'production', status: 'active', eventCount: 89400, lastActive: '5 mins ago', lastActivity: '5 mins ago', sdkConnected: true },
+        { id: 'proj_3', name: 'Beta Sandbox Web', orgName: 'Beta Dev Innovations', ownerEmail: 'mscott@beta.io', websiteUrl: 'https://sandbox.beta.io', environment: 'development', status: 'active', eventCount: 120, lastActive: 'Yesterday', lastActivity: 'Yesterday', sdkConnected: false }
+      ],
 
-      safeStorage.setItem('token', mockJwt);
-      safeStorage.setItem('user', JSON.stringify(newUser));
-      safeStorage.setItem('activeOrgId', newOrgId);
-      safeStorage.setItem('activeProjectId', newProjId);
-      safeStorage.setItem('portalMode', 'customer');
+      allApiKeysList: [
+        { id: 'key_prod_1', projectId: 'proj_1', projectName: 'Primary Web Storefront', ownerEmail: 'hitesh@insightfuel.io', displayName: 'Production Web Write Key', key: 'if_live_9f8a3c2b1e4d5f6a7b8c9d0e', environment: 'production', status: 'active', createdAt: '2026-01-15', lastUsedAt: '2 mins ago', requestCount: 142850 },
+        { id: 'key_dev_1', projectId: 'proj_1', projectName: 'Primary Web Storefront', ownerEmail: 'hitesh@insightfuel.io', displayName: 'Staging Test Key', key: 'if_test_4a3b2c1d0e9f8a7b6c5d4e3f', environment: 'development', status: 'active', createdAt: '2026-01-20', lastUsedAt: '1 hour ago', requestCount: 3820 },
+        { id: 'key_prod_2', projectId: 'proj_2', projectName: 'Mobile Web Checkout App', ownerEmail: 'hitesh@insightfuel.io', displayName: 'Mobile Web Key', key: 'if_live_7c6b5a4d3e2f1a0b9c8d7e6f', environment: 'production', status: 'active', createdAt: '2026-02-10', lastUsedAt: '5 mins ago', requestCount: 89400 }
+      ],
 
-      set({
-        token: mockJwt,
-        isAuthenticated: true,
-        user: newUser,
-        portalMode: 'customer',
-        activeOrgId: newOrgId,
-        activeProjectId: newProjId,
-        orgs: [...get().orgs, newOrg],
-        projects: [...get().projects, newProject],
-        apiKeys: { ...get().apiKeys, [newProjId]: [newApiKey] }
-      });
+      servicesHealth: [
+        { id: 'svc_1', name: 'API Gateway Service', status: 'healthy', latency: '12ms', latencyMs: 12, uptime: '99.99%', port: 8000, directory: 'apps/api-gateway', lastHeartbeat: '10s ago' },
+        { id: 'svc_2', name: 'Analytics Ingestion Service', status: 'healthy', latency: '18ms', latencyMs: 18, uptime: '99.98%', port: 8001, directory: 'services/ingestion', lastHeartbeat: '8s ago' },
+        { id: 'svc_3', name: 'Event Processor Stream', status: 'healthy', latency: '8ms', latencyMs: 8, uptime: '99.99%', port: 8002, directory: 'services/event-processor', lastHeartbeat: '5s ago' },
+        { id: 'svc_4', name: 'Query Engine Service', status: 'healthy', latency: '24ms', latencyMs: 24, uptime: '99.95%', port: 8003, directory: 'services/query-api', lastHeartbeat: '12s ago' },
+        { id: 'svc_5', name: 'Feature Intelligence Service', status: 'healthy', latency: '32ms', latencyMs: 32, uptime: '99.92%', port: 8004, directory: 'services/feature-intelligence', lastHeartbeat: '15s ago' },
+        { id: 'svc_6', name: 'Product Health Service', status: 'healthy', latency: '15ms', latencyMs: 15, uptime: '99.99%', port: 8005, directory: 'services/product-health', lastHeartbeat: '10s ago' },
+        { id: 'svc_7', name: 'AI Recommendation Engine', status: 'healthy', latency: '45ms', latencyMs: 45, uptime: '99.90%', port: 8006, directory: 'services/ai-engine', lastHeartbeat: '20s ago' }
+      ],
 
-      get().recordAuditLog('Customer Registered', 'user', newUserId, `Registered customer ${email}`);
-      return true;
-    } catch {
-      return false;
-    }
-  },
+      auditLogs: [
+        { id: 'log_1', timestamp: '2026-07-21 16:30:12', actorEmail: 'hitesh@insightfuel.io', action: 'API Key Created', target: 'key_prod_1', targetType: 'API Key', details: 'Generated production write key for Primary Web Storefront', ipAddress: '192.168.1.1', status: 'success' },
+        { id: 'log_2', timestamp: '2026-07-21 15:45:00', actorEmail: 'sarah@acme.com', action: 'Project Updated', target: 'proj_1', targetType: 'Project', details: 'Updated environment configuration', ipAddress: '192.168.1.45', status: 'success' }
+      ],
 
-  login: async (email, _password) => {
-    try {
-      const isSuper = email.toLowerCase().includes('admin') || email === 'admin@insightfuel.io';
-      const existingUser = get().user || DEFAULT_USER;
+      setSelectedFramework: (framework: SupportedFramework) => {
+        set({ selectedFramework: framework });
+      },
 
-      const userProfile: UserProfile = {
-        ...existingUser,
-        email,
-        role: isSuper ? 'superadmin' : 'owner',
-        isSuperAdmin: isSuper
-      };
+      login: (email: string, isSuperAdmin = false) => {
+        const role: 'owner' | 'admin' | 'developer' | 'viewer' = 'owner';
+        set({
+          token: 'mock_jwt_token_insightfuel',
+          isAuthenticated: true,
+          user: {
+            id: `usr_${Date.now()}`,
+            name: email.split('@')[0],
+            email,
+            role,
+            isSuperAdmin,
+            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+          },
+          portalMode: isSuperAdmin ? 'superadmin' : 'customer'
+        });
+      },
 
-      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const payload = btoa(JSON.stringify({ org_id: get().activeOrgId, sub: userProfile.id, role: userProfile.role, exp: Math.floor(Date.now() / 1000) + 86400 }));
-      const mockJwt = `${header}.${payload}.signature`;
+      logout: () => {
+        set({
+          token: null,
+          isAuthenticated: false,
+          user: null,
+          portalMode: 'customer'
+        });
+      },
 
-      safeStorage.setItem('token', mockJwt);
-      safeStorage.setItem('user', JSON.stringify(userProfile));
-      safeStorage.setItem('portalMode', isSuper ? 'superadmin' : 'customer');
+      switchOrganization: (orgId: string) => {
+        const { projects } = get();
+        const orgProjects = projects.filter((p) => p.orgId === orgId);
+        const nextProjectId = orgProjects[0]?.id || '';
+        set({
+          activeOrgId: orgId,
+          activeProjectId: nextProjectId
+        });
+      },
 
-      set({
-        token: mockJwt,
-        isAuthenticated: true,
-        user: userProfile,
-        portalMode: isSuper ? 'superadmin' : 'customer'
-      });
+      switchProject: (projectId: string) => {
+        set({ activeProjectId: projectId });
+      },
 
-      get().recordAuditLog('User Login', 'system', userProfile.id, `Signed in: ${email}`);
-      return true;
-    } catch {
-      return false;
-    }
-  },
+      switchPortalMode: (mode: 'customer' | 'superadmin') => {
+        set({ portalMode: mode });
+      },
 
-  forgotPassword: async (email) => {
-    await new Promise(r => setTimeout(r, 600));
-    get().recordAuditLog('Password Reset Requested', 'user', email, `Password reset requested for ${email}`);
-    return { success: true, message: `Password reset instructions sent to ${email}.` };
-  },
-
-  resendVerification: () => {
-    set({ verificationSent: true });
-    setTimeout(() => set({ verificationSent: false }), 4000);
-  },
-
-  logout: () => {
-    safeStorage.removeItem('token');
-    safeStorage.removeItem('user');
-    set({ token: null, isAuthenticated: false, user: null });
-  },
-
-  setOnboardingStep: (step) => {
-    safeStorage.setItem('onboardingStep', step.toString());
-    set({ onboardingStep: step });
-  },
-
-  completeOnboarding: () => {
-    safeStorage.setItem('onboardingStep', '7');
-    safeStorage.setItem('onboardingCompleted', 'true');
-    set({ onboardingStep: 7, onboardingCompleted: true });
-  },
-
-  resetOnboarding: () => {
-    safeStorage.setItem('onboardingStep', '1');
-    safeStorage.setItem('onboardingCompleted', 'false');
-    set({ onboardingStep: 1, onboardingCompleted: false });
-  },
-
-  switchOrganization: (orgId) => {
-    const firstProj = get().projects.find(p => p.orgId === orgId);
-    const projId = firstProj ? firstProj.id : '';
-    safeStorage.setItem('activeOrgId', orgId);
-    if (projId) safeStorage.setItem('activeProjectId', projId);
-    set({ activeOrgId: orgId, activeProjectId: projId });
-    get().recordAuditLog('Workspace Switched', 'organization', orgId, `Switched workspace to ${orgId}`);
-  },
-
-  switchProject: (projectId) => {
-    safeStorage.setItem('activeProjectId', projectId);
-    set({ activeProjectId: projectId });
-  },
-
-  switchPortalMode: (mode) => {
-    safeStorage.setItem('portalMode', mode);
-    set({ portalMode: mode });
-  },
-
-  createProject: (name, id) => {
-    const activeOrg = get().activeOrgId;
-    const newProj: Project = {
-      id,
-      name,
-      orgId: activeOrg,
-      websiteUrl: 'https://example.com',
-      environment: 'production',
-      description: 'Created project',
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0],
-      eventCount: 0,
-      sdkConnected: false
-    };
-    set({ projects: [...get().projects, newProj], activeProjectId: id });
-    safeStorage.setItem('activeProjectId', id);
-  },
-
-  createCustomerProject: (name, websiteUrl, environment, description) => {
-    const activeOrg = get().activeOrgId;
-    const newProjId = `proj_${Date.now()}`;
-    const newKeyId = `key_${Date.now()}`;
-    const prefix = environment === 'production' ? 'if_live_' : 'if_test_';
-    const rawSdkKey = `${prefix}${Math.random().toString(36).substring(2, 14)}${Math.random().toString(36).substring(2, 14)}`;
-
-    const newProject: Project = {
-      id: newProjId,
-      name,
-      orgId: activeOrg,
-      websiteUrl: websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`,
-      environment,
-      description,
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0],
-      eventCount: 0,
-      sdkConnected: false
-    };
-
-    const newApiKey: ApiKey = {
-      id: newKeyId,
-      projectId: newProjId,
-      key: rawSdkKey,
-      displayName: `${name} ${environment.toUpperCase()} Key`,
-      environment,
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0],
-      lastUsedAt: null,
-      requestCount: 0
-    };
-
-    set({
-      projects: [...get().projects, newProject],
-      apiKeys: { ...get().apiKeys, [newProjId]: [newApiKey] },
-      activeProjectId: newProjId
-    });
-
-    safeStorage.setItem('activeProjectId', newProjId);
-    get().recordAuditLog('Customer Project Created', 'project', newProjId, `Project created: ${name}`);
-    return newProject;
-  },
-
-  updateProjectStatus: (projectId, status) => {
-    set({ projects: get().projects.map(p => p.id === projectId ? { ...p, status } : p) });
-    get().recordAuditLog('Project Status Updated', 'project', projectId, `Status updated to ${status}`);
-  },
-
-  deleteCustomerProject: (projectId) => {
-    if (!get().canDeleteProject()) return;
-    set({ projects: get().projects.filter(p => p.id !== projectId) });
-    get().recordAuditLog('Customer Project Deleted', 'project', projectId, `Deleted project ${projectId}`);
-  },
-
-  createCustomerOrganization: (orgName) => {
-    const newOrgId = `org_${Date.now()}`;
-    const newOrg: Organization = {
-      id: newOrgId,
-      name: orgName,
-      ownerEmail: get().user?.email || 'owner@company.com',
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-
-    set({ orgs: [...get().orgs, newOrg], activeOrgId: newOrgId });
-    safeStorage.setItem('activeOrgId', newOrgId);
-    get().recordAuditLog('Organization Created', 'organization', newOrgId, `Created org: ${orgName}`);
-    return newOrg;
-  },
-
-  generateApiKey: (projectId, displayName, environment) => {
-    const newKeyId = `key_${Date.now()}`;
-    const prefix = environment === 'production' ? 'if_live_' : 'if_test_';
-    const rawSdkKey = `${prefix}${Math.random().toString(36).substring(2, 14)}${Math.random().toString(36).substring(2, 14)}`;
-
-    const newApiKey: ApiKey = {
-      id: newKeyId,
-      projectId,
-      key: rawSdkKey,
-      displayName: displayName || `${environment.toUpperCase()} Key`,
-      environment,
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0],
-      lastUsedAt: 'Just created',
-      requestCount: 0
-    };
-
-    const currentKeys = get().apiKeys[projectId] || [];
-    set({ apiKeys: { ...get().apiKeys, [projectId]: [newApiKey, ...currentKeys] } });
-    get().recordAuditLog('API Key Generated', 'api_key', newKeyId, `Key generated: ${displayName}`);
-    return newApiKey;
-  },
-
-  rotateApiKey: (keyId) => {
-    let rotatedNewKey: ApiKey | null = null;
-    const allKeysMap = { ...get().apiKeys };
-
-    for (const projId in allKeysMap) {
-      const projKeys = allKeysMap[projId];
-      const targetIndex = projKeys.findIndex(k => k.id === keyId);
-      if (targetIndex !== -1) {
-        const oldKey = projKeys[targetIndex];
-        projKeys[targetIndex] = { ...oldKey, status: 'rotated' };
-
-        const prefix = oldKey.environment === 'production' ? 'if_live_' : 'if_test_';
-        const freshSdkKey = `${prefix}${Math.random().toString(36).substring(2, 14)}${Math.random().toString(36).substring(2, 14)}`;
-        
-        rotatedNewKey = {
-          id: `key_${Date.now()}`,
-          projectId: projId,
-          key: freshSdkKey,
-          displayName: `${oldKey.displayName} (Rotated)`,
-          environment: oldKey.environment,
+      createCustomerProject: (name: string, websiteUrl: string, environment: 'production' | 'staging' | 'development', description?: string, framework = 'react') => {
+        const { activeOrgId, projects, apiKeys, allProjectsList, onboardingChecklist } = get();
+        const newProjId = `proj_${Date.now()}`;
+        const newProject: Project = {
+          id: newProjId,
+          orgId: activeOrgId,
+          name,
+          websiteUrl,
+          environment,
+          description,
           status: 'active',
           createdAt: new Date().toISOString().split('T')[0],
-          lastUsedAt: 'Just rotated',
+          eventCount: 0,
+          framework
+        };
+
+        const prefix = environment === 'production' ? 'if_live_' : 'if_test_';
+        const randomHex = Math.random().toString(36).substring(2, 18);
+        const newKey: ApiKey = {
+          id: `key_${Date.now()}`,
+          projectId: newProjId,
+          displayName: `${name} Key`,
+          key: `${prefix}${randomHex}`,
+          environment,
+          status: 'active',
+          createdAt: new Date().toISOString().split('T')[0],
+          lastUsedAt: 'Just now',
           requestCount: 0
         };
 
-        allKeysMap[projId] = [rotatedNewKey, ...projKeys];
-        break;
+        const newGlobalProject: GlobalProject = {
+          id: newProjId,
+          name,
+          orgName: 'Acme E-Commerce Inc',
+          ownerEmail: 'hitesh@insightfuel.io',
+          websiteUrl,
+          environment,
+          status: 'active',
+          eventCount: 0,
+          lastActive: 'Just now',
+          lastActivity: 'Just now',
+          sdkConnected: false
+        };
+
+        set({
+          projects: [...projects, newProject],
+          allProjectsList: [newGlobalProject, ...allProjectsList],
+          activeProjectId: newProjId,
+          selectedFramework: framework as SupportedFramework,
+          apiKeys: {
+            ...apiKeys,
+            [newProjId]: [newKey]
+          },
+          onboardingChecklist: {
+            ...onboardingChecklist,
+            projectCreated: true,
+            keyGenerated: true
+          }
+        });
+      },
+
+      createProject: (name: string, websiteUrl: string, environment: 'production' | 'staging' | 'development', description?: string, framework?: string) => {
+        get().createCustomerProject(name, websiteUrl, environment, description, framework);
+      },
+
+      updateProjectStatus: (projectId: string, status: 'active' | 'paused' | 'archived') => {
+        const { projects, allProjectsList } = get();
+        set({
+          projects: projects.map(p => p.id === projectId ? { ...p, status } : p),
+          allProjectsList: allProjectsList.map(p => p.id === projectId ? { ...p, status } : p)
+        });
+      },
+
+      createOrganization: (name: string) => {
+        const { orgs, user, onboardingChecklist } = get();
+        const newOrgId = `org_${Date.now()}`;
+        const newOrg: Organization = {
+          id: newOrgId,
+          name,
+          slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          ownerEmail: user?.email || 'owner@acme.com',
+          plan: 'pro',
+          createdAt: new Date().toISOString().split('T')[0]
+        };
+
+        set({
+          orgs: [...orgs, newOrg],
+          activeOrgId: newOrgId,
+          onboardingChecklist: {
+            ...onboardingChecklist,
+            orgCreated: true
+          }
+        });
+      },
+
+      generateApiKey: (projectId: string, displayName: string, environment: 'production' | 'development' | 'staging') => {
+        const { apiKeys, allApiKeysList, onboardingChecklist } = get();
+        const prefix = environment === 'production' ? 'if_live_' : 'if_test_';
+        const randomHex = Math.random().toString(36).substring(2, 18);
+
+        const newKey: ApiKey = {
+          id: `key_${Date.now()}`,
+          projectId,
+          displayName,
+          key: `${prefix}${randomHex}`,
+          environment,
+          status: 'active',
+          createdAt: new Date().toISOString().split('T')[0],
+          lastUsedAt: 'Never',
+          requestCount: 0
+        };
+
+        const newGlobalKey: GlobalApiKey = {
+          ...newKey,
+          projectName: 'Primary Storefront',
+          ownerEmail: 'hitesh@insightfuel.io'
+        };
+
+        const existing = apiKeys[projectId] || [];
+        set({
+          apiKeys: {
+            ...apiKeys,
+            [projectId]: [newKey, ...existing]
+          },
+          allApiKeysList: [newGlobalKey, ...allApiKeysList],
+          onboardingChecklist: {
+            ...onboardingChecklist,
+            keyGenerated: true
+          }
+        });
+      },
+
+      rotateApiKey: (keyId: string) => {
+        const { apiKeys, activeProjectId, allApiKeysList } = get();
+        const list = apiKeys[activeProjectId] || [];
+        const updated = list.map(k => {
+          if (k.id === keyId) {
+            const prefix = k.environment === 'production' ? 'if_live_' : 'if_test_';
+            const randomHex = Math.random().toString(36).substring(2, 18);
+            return { ...k, key: `${prefix}${randomHex}`, lastUsedAt: 'Rotated just now' };
+          }
+          return k;
+        });
+
+        set({
+          apiKeys: {
+            ...apiKeys,
+            [activeProjectId]: updated
+          },
+          allApiKeysList: allApiKeysList.map(k => k.id === keyId ? { ...k, key: updated.find(u => u.id === keyId)?.key || k.key } : k)
+        });
+      },
+
+      toggleKeyStatus: (keyId: string) => {
+        const { apiKeys, activeProjectId, allApiKeysList } = get();
+        const list = apiKeys[activeProjectId] || [];
+        const updated = list.map(k => {
+          if (k.id === keyId) {
+            return { ...k, status: (k.status === 'active' ? 'disabled' : 'active') as 'active' | 'disabled' };
+          }
+          return k;
+        });
+
+        set({
+          apiKeys: {
+            ...apiKeys,
+            [activeProjectId]: updated
+          },
+          allApiKeysList: allApiKeysList.map(k => k.id === keyId ? { ...k, status: k.status === 'active' ? 'disabled' : 'active' } : k)
+        });
+      },
+
+      deleteApiKey: (keyId: string) => {
+        const { apiKeys, activeProjectId, allApiKeysList } = get();
+        const list = apiKeys[activeProjectId] || [];
+        const updated = list.filter(k => k.id !== keyId);
+
+        set({
+          apiKeys: {
+            ...apiKeys,
+            [activeProjectId]: updated
+          },
+          allApiKeysList: allApiKeysList.filter(k => k.id !== keyId)
+        });
+      },
+
+      inviteTeamMember: (email: string, role: 'admin' | 'developer' | 'viewer') => {
+        const { invitations, activeOrgId, user } = get();
+        const newInv: WorkspaceInvitation = {
+          id: `inv_${Date.now()}`,
+          orgId: activeOrgId,
+          email,
+          role,
+          token: `inv_tok_${Math.random().toString(36).substring(2, 10)}`,
+          status: 'pending',
+          invitedByEmail: user?.email || 'owner@acme.com',
+          createdAt: new Date().toISOString().split('T')[0],
+          expiresAt: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+        };
+
+        set({ invitations: [newInv, ...invitations] });
+      },
+
+      revokeInvitation: (invitationId: string) => {
+        const { invitations } = get();
+        set({
+          invitations: invitations.map(i => i.id === invitationId ? { ...i, status: 'revoked' } : i)
+        });
+      },
+
+      acceptInvitation: (token: string) => {
+        const { invitations } = get();
+        set({
+          invitations: invitations.map(i => i.token === token ? { ...i, status: 'accepted' } : i)
+        });
+      },
+
+      transferOwnership: (newOwnerEmail: string) => {
+        const { orgs, activeOrgId } = get();
+        set({
+          orgs: orgs.map(o => o.id === activeOrgId ? { ...o, ownerEmail: newOwnerEmail } : o)
+        });
+      },
+
+      completeOnboarding: () => {
+        const { onboardingChecklist } = get();
+        set({ 
+          onboardingCompleted: true, 
+          onboardingStep: 7,
+          isSetupSkipped: false,
+          onboardingChecklist: {
+            ...onboardingChecklist,
+            dashboardExplored: true
+          }
+        });
+      },
+
+      skipOnboarding: () => {
+        set({ isSetupSkipped: true, onboardingCompleted: false });
+      },
+
+      reopenOnboarding: () => {
+        set({ isSetupSkipped: false, onboardingStep: 1 });
+      },
+
+      setOnboardingStep: (step: number) => {
+        set({ onboardingStep: step });
+      },
+
+      startAutoSdkDetection: () => {
+        set({ autoDetectionStatus: 'listening' });
+        setTimeout(() => {
+          get().sendTestEvent('auto_detected_event');
+          set({ autoDetectionStatus: 'connected' });
+        }, 2500);
+      },
+
+      sendTestEvent: (eventName = 'test_signal_ping') => {
+        const { projects, activeProjectId, onboardingChecklist, allProjectsList } = get();
+        const activeProj = projects.find(p => p.id === activeProjectId) || projects[0];
+
+        const updatedEventCount = (activeProj?.eventCount || 0) + 1;
+        const nowStr = new Date().toLocaleTimeString();
+
+        set({
+          hasReceivedFirstEvent: true,
+          autoDetectionStatus: 'connected',
+          lastReceivedEvent: {
+            name: eventName,
+            timestamp: nowStr,
+            project: activeProj?.name || 'Primary Storefront',
+            environment: activeProj?.environment || 'production',
+            payload: JSON.stringify({ event: eventName, status: 'success', latency_ms: 14 })
+          },
+          projects: projects.map(p => p.id === activeProjectId ? { ...p, eventCount: updatedEventCount } : p),
+          allProjectsList: allProjectsList.map(p => p.id === activeProjectId ? { ...p, sdkConnected: true, lastActivity: nowStr, eventCount: updatedEventCount } : p),
+          onboardingChecklist: {
+            ...onboardingChecklist,
+            sdkInstalled: true,
+            firstEventReceived: true
+          }
+        });
+      },
+
+      markChecklistStep: (stepKey: keyof OnboardingChecklist, value = true) => {
+        const { onboardingChecklist } = get();
+        set({
+          onboardingChecklist: {
+            ...onboardingChecklist,
+            [stepKey]: value
+          }
+        });
+      },
+
+      suspendCustomer: (customerId: string) => {
+        const { allCustomers } = get();
+        set({
+          allCustomers: allCustomers.map(c => c.id === customerId ? { ...c, status: 'suspended' } : c)
+        });
+      },
+
+      reactivateCustomer: (customerId: string) => {
+        const { allCustomers } = get();
+        set({
+          allCustomers: allCustomers.map(c => c.id === customerId ? { ...c, status: 'active' } : c)
+        });
+      },
+
+      deleteCustomer: (customerId: string) => {
+        const { allCustomers } = get();
+        set({
+          allCustomers: allCustomers.filter(c => c.id !== customerId)
+        });
+      },
+
+      triggerPasswordReset: (email: string) => {
+        console.log(`Password reset link dispatched to ${email}`);
+      },
+
+      revokeApiKey: (keyId: string) => {
+        get().deleteApiKey(keyId);
+      },
+
+      flagApiKeyAbuse: (keyId: string) => {
+        get().toggleKeyStatus(keyId);
+      },
+
+      canManageBilling: () => {
+        const { user } = get();
+        return user?.role === 'owner';
+      },
+
+      canDeleteProject: () => {
+        const { user } = get();
+        return user?.role === 'owner';
+      },
+
+      canManageKeys: () => {
+        const { user } = get();
+        return user?.role === 'owner' || user?.role === 'admin';
+      },
+
+      canInviteMembers: () => {
+        const { user } = get();
+        return user?.role === 'owner' || user?.role === 'admin';
       }
+    }),
+    {
+      name: 'insightfuel_auth_store'
     }
-
-    set({ apiKeys: allKeysMap });
-    get().recordAuditLog('API Key Rotated', 'api_key', keyId, `Rotated key ${keyId}`);
-    return rotatedNewKey;
-  },
-
-  toggleKeyStatus: (keyId) => {
-    const allKeysMap = { ...get().apiKeys };
-    for (const projId in allKeysMap) {
-      allKeysMap[projId] = allKeysMap[projId].map(k => k.id === keyId ? { ...k, status: k.status === 'active' ? 'deactivated' : 'active' } : k);
-    }
-    set({ apiKeys: allKeysMap });
-  },
-
-  deleteApiKey: (keyId) => {
-    const allKeysMap = { ...get().apiKeys };
-    for (const projId in allKeysMap) {
-      allKeysMap[projId] = allKeysMap[projId].filter(k => k.id !== keyId);
-    }
-    set({ apiKeys: allKeysMap });
-  },
-
-  updateProfile: (name, companyName) => {
-    if (!get().user) return;
-    const updated: UserProfile = { ...get().user!, name, companyName };
-    safeStorage.setItem('user', JSON.stringify(updated));
-    set({ user: updated });
-  },
-
-  // Team & Invitation Actions
-  inviteTeamMember: (email, role) => {
-    const newInv: WorkspaceInvitation = {
-      id: `inv_${Date.now()}`,
-      orgId: get().activeOrgId,
-      email,
-      role,
-      token: `inv_tok_${Math.random().toString(36).substring(2, 14)}`,
-      status: 'pending',
-      invitedByEmail: get().user?.email || 'owner@company.com',
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    set({ invitations: [newInv, ...get().invitations] });
-    get().recordAuditLog('Team Member Invited', 'invitation', newInv.id, `Invited ${email} with role ${role}`);
-    return newInv;
-  },
-
-  revokeInvitation: (invitationId) => {
-    set({ invitations: get().invitations.map(i => i.id === invitationId ? { ...i, status: 'revoked' as const } : i) });
-    get().recordAuditLog('Invitation Revoked', 'invitation', invitationId, `Revoked invitation ${invitationId}`);
-  },
-
-  acceptInvitation: (token) => {
-    const inv = get().invitations.find(i => i.token === token && i.status === 'pending');
-    if (!inv) return false;
-    set({ invitations: get().invitations.map(i => i.token === token ? { ...i, status: 'accepted' as const } : i) });
-    get().recordAuditLog('Invitation Accepted', 'invitation', inv.id, `Accepted invitation for ${inv.email}`);
-    return true;
-  },
-
-  transferOwnership: (newOwnerEmail) => {
-    if (get().user?.role !== 'owner') return;
-    const updatedOrgs = get().orgs.map(o => o.id === get().activeOrgId ? { ...o, ownerEmail: newOwnerEmail } : o);
-    set({ orgs: updatedOrgs });
-    get().recordAuditLog('Ownership Transferred', 'organization', get().activeOrgId, `Transferred organization ownership to ${newOwnerEmail}`);
-  },
-
-  // Superadmin Actions
-  suspendCustomer: (userId) => {
-    set({ allCustomers: get().allCustomers.map(c => c.id === userId ? { ...c, status: 'suspended' as const } : c) });
-  },
-
-  reactivateCustomer: (userId) => {
-    set({ allCustomers: get().allCustomers.map(c => c.id === userId ? { ...c, status: 'active' as const } : c) });
-  },
-
-  deleteCustomer: (userId) => {
-    set({ allCustomers: get().allCustomers.filter(c => c.id !== userId) });
-  },
-
-  triggerPasswordReset: (userId) => {
-    get().recordAuditLog('Admin Reset Password', 'user', userId, `Triggered reset token for ${userId}`);
-    return `rst_${Math.random().toString(36).substring(2, 14)}`;
-  },
-
-  revokeApiKey: (keyId) => {
-    set({ allApiKeysList: get().allApiKeysList.map(k => k.id === keyId ? { ...k, status: 'deactivated' as const } : k) });
-  },
-
-  flagApiKeyAbuse: (keyId) => {
-    set({ allApiKeysList: get().allApiKeysList.map(k => k.id === keyId ? { ...k, status: 'flagged' as const } : k) });
-  },
-
-  recordAuditLog: (action, targetType, targetId, details) => {
-    const actorEmail = get().user?.email || 'system@insightfuel.io';
-    const newEntry: AuditLogEntry = {
-      id: `log_${Date.now()}`,
-      actorEmail,
-      action,
-      targetType,
-      targetId,
-      details,
-      ipAddress: '127.0.0.1',
-      timestamp: 'Just now'
-    };
-    set({ auditLogs: [newEntry, ...get().auditLogs] });
-  }
-}));
+  )
+);

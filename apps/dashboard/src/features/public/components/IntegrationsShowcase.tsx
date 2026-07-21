@@ -5,6 +5,7 @@ import {
   Copy, 
   Check
 } from 'lucide-react';
+import { useThemeStore } from '../../../shared/stores/useThemeStore';
 
 interface IntegrationsShowcaseProps {
   onBackToLanding: () => void;
@@ -12,6 +13,7 @@ interface IntegrationsShowcaseProps {
 }
 
 export default function IntegrationsShowcase({ onBackToLanding, onNavigateAuth }: IntegrationsShowcaseProps) {
+  const { theme } = useThemeStore();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const integrations = [
@@ -65,29 +67,33 @@ export default function IntegrationsShowcase({ onBackToLanding, onNavigateAuth }
     setTimeout(() => setCopiedId(null), 2500);
   };
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
+    <div className={`min-h-screen font-sans antialiased ${isDark ? 'bg-black text-neutral-100' : 'bg-white text-neutral-900'}`}>
       
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <header className={`sticky top-0 z-50 border-b ${isDark ? 'bg-black border-neutral-800' : 'bg-white border-neutral-200'}`}>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={onBackToLanding}
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-slate-400 hover:text-white transition flex items-center space-x-1 text-xs font-semibold"
+              className={`p-1.5 border rounded-lg transition flex items-center space-x-1 text-xs font-medium ${
+                isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white' : 'bg-neutral-100 border-neutral-200 text-neutral-600 hover:text-black'
+              }`}
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back</span>
             </button>
             <div className="flex items-center space-x-2">
-              <Boxes className="h-5 w-5 text-indigo-400" />
-              <span className="font-extrabold text-base text-white">SDK & Framework Integrations</span>
+              <Boxes className="h-4 w-4 text-blue-500" />
+              <span className="font-semibold text-sm">SDK Integrations</span>
             </div>
           </div>
 
           <button
             onClick={onNavigateAuth}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition"
+            className="px-4 py-2 bg-neutral-100 hover:bg-white text-black rounded-lg text-xs font-semibold transition shadow-sm"
           >
             Get Started Free →
           </button>
@@ -95,37 +101,43 @@ export default function IntegrationsShowcase({ onBackToLanding, onNavigateAuth }
       </header>
 
       {/* Main Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Universal SDK Ecosystem</span>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Plug-and-Play Integrations for Any Stack</h1>
-          <p className="text-xs text-slate-400">Lightweight, asynchronous telemetry SDKs designed for zero main-thread overhead.</p>
+      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8">
+        <div className="text-center space-y-2 max-w-xl mx-auto">
+          <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Universal SDK Ecosystem</span>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Plug-and-Play Integrations for Any Stack</h1>
+          <p className="text-xs text-neutral-400">Lightweight, asynchronous telemetry SDKs designed for zero main-thread overhead.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {integrations.map(item => (
-            <div key={item.id} className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4 flex flex-col justify-between hover:border-blue-500/40 transition">
+            <div key={item.id} className={`border rounded-xl p-6 space-y-4 flex flex-col justify-between ${
+              isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-white border-neutral-200 shadow-sm'
+            }`}>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <span className="text-2xl">{item.icon}</span>
-                  <h3 className="text-base font-bold text-white tracking-tight">{item.name}</h3>
+                  <h3 className="text-sm font-semibold text-white">{item.name}</h3>
                 </div>
 
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-blue-300 flex items-center justify-between">
+                <div className={`p-2.5 rounded-lg border font-mono text-[11px] text-blue-400 flex items-center justify-between ${
+                  isDark ? 'bg-black border-neutral-800' : 'bg-neutral-50 border-neutral-200'
+                }`}>
                   <span className="truncate">{item.pkg}</span>
-                  <button onClick={() => handleCopy(item.pkg, `${item.id}_pkg`)} className="p-1 text-slate-400 hover:text-white">
-                    {copiedId === `${item.id}_pkg` ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  <button onClick={() => handleCopy(item.pkg, `${item.id}_pkg`)} className="p-1 text-neutral-400 hover:text-white">
+                    {copiedId === `${item.id}_pkg` ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                   </button>
                 </div>
 
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[10px] text-slate-300 overflow-x-auto leading-relaxed">
+                <div className={`p-3 rounded-lg border font-mono text-[10px] text-neutral-300 overflow-x-auto leading-relaxed ${
+                  isDark ? 'bg-black border-neutral-800' : 'bg-neutral-950 text-neutral-200 border-neutral-900'
+                }`}>
                   <pre>{item.snippet}</pre>
                 </div>
               </div>
 
               <button
                 onClick={onNavigateAuth}
-                className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition mt-2"
+                className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-200 rounded-lg text-xs font-medium border border-neutral-800 transition mt-2"
               >
                 Generate API Key & Install
               </button>

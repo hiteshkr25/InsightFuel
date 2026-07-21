@@ -1,56 +1,49 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-
-// Define a browser-like environment in global scope
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value.toString(); },
-    clear: () => { store = {}; },
-    removeItem: (key: string) => { delete store[key]; }
-  };
-})();
-
-Object.defineProperty(globalThis, 'window', { value: globalThis });
-Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock });
-
-// Now import the store
+import { describe, it, expect } from 'vitest';
 import { useAuthStore } from './shared/stores/useAuthStore';
 
-describe('useAuthStore', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    const store = useAuthStore.getState();
-    store.logout();
-  });
-
-  it('starts as unauthenticated', () => {
+describe('InsightFuel Dashboard Application Logic', () => {
+  it('initializes auth state with default workspace', () => {
     const state = useAuthStore.getState();
-    expect(state.isAuthenticated).toBe(false);
-    expect(state.user).toBeNull();
+    expect(state.isAuthenticated).toBe(true);
+    expect(state.user?.email).toBe('hitesh@insightfuel.io');
+    expect(state.orgs.length).toBeGreaterThan(0);
+    expect(state.projects.length).toBeGreaterThan(0);
   });
 
-  it('authenticates successfully after login', async () => {
+  it('allows switching active organization and project', () => {
     const store = useAuthStore.getState();
-    const success = await store.login('admin@insightfuel.io', 'password');
+    const secondOrg = store.orgs[1] || store.orgs[0];
     
-    expect(success).toBe(true);
-    expect(useAuthStore.getState().isAuthenticated).toBe(true);
-    expect(useAuthStore.getState().user?.email).toBe('admin@insightfuel.io');
+    store.switchOrganization(secondOrg.id);
+    expect(useAuthStore.getState().activeOrgId).toBe(secondOrg.id);
   });
 
-  it('switches projects within active organization', () => {
+  it('supports generating new API keys bound to project', () => {
     const store = useAuthStore.getState();
-    store.switchProject('proj_456');
-    expect(useAuthStore.getState().activeProjectId).toBe('proj_456');
+    const activeProjId = store.activeProjectId;
+    const initialKeysCount = (store.apiKeys[activeProjId] || []).length;
+
+    store.generateApiKey(activeProjId, 'Unit Test Key', 'production');
+    
+    const updatedKeys = useAuthStore.getState().apiKeys[activeProjId] || [];
+    expect(updatedKeys.length).toBe(initialKeysCount + 1);
+    expect(updatedKeys[0].displayName).toBe('Unit Test Key');
   });
 
-  it('clears state on logout', async () => {
+  it('evaluates RBAC permission checkers correctly', () => {
     const store = useAuthStore.getState();
-    await store.login('admin@insightfuel.io', 'password');
+    expect(store.canManageBilling()).toBe(true);
+    expect(store.canManageKeys()).toBe(true);
+    expect(store.canInviteMembers()).toBe(true);
+  });
+
+  it('supports logout and login authentication flow', () => {
+    const store = useAuthStore.getState();
     store.logout();
-    
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
-    expect(useAuthStore.getState().token).toBeNull();
+
+    store.login('operator@insightfuel.io', true);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().user?.email).toBe('operator@insightfuel.io');
   });
 });
